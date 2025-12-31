@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,viewport-fit=cover"/>
+<title>BÀ ĐỤT – Mobile Final</title>
+
+<style>
+html,body{
+  margin:0;height:100%;
+  background:#0b2b3a;
+  overflow:hidden;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto;
+  -webkit-user-select:none;
+  user-select:none;
+  touch-action:none;
+}
+
+/* ===== Canvas ===== */
+canvas{
+  width:100vw;height:100vh;
+  display:block;
+  background:linear-gradient(180deg,#0b2b3a 0%,#171033 100%);
+}
+
+/* ===== HUD ===== */
+#hud{position:fixed;inset:0;pointer-events:none}
+
+:root{
+  --safeT: env(safe-area-inset-top);
+  --safeR: env(safe-area-inset-right);
+  --safeB: env(safe-area-inset-bottom);
+  --safeL: env(safe-area-inset-left);
+}
+
+/* ===== Buttons (Mint / Coral) ===== */
+.btn{
+  position:absolute;
+  pointer-events:auto;
+  display:grid;place-items:center;
+  font-weight:900;color:#fff;
+  border-radius:18px;
+  background:rgba(30,255,214,0.18);
+  border:1px solid rgba(30,255,214,0.45);
+  border-bottom:2px solid rgba(255,107,155,0.35);
+  backdrop-filter:blur(10px) saturate(140%);
+  -webkit-backdrop-filter:blur(10px) saturate(140%);
+  box-shadow:0 10px 28px rgba(0,0,0,.22);
+}
+.btn:active{
+  background:rgba(255,107,155,0.25);
+  transform:scale(.97);
+}
+
+/* Movement */
+#left,#right{
+  width:72px;height:72px;
+  bottom:calc(22px + var(--safeB));
+  font-size:26px;
+}
+#left{left:calc(22px + var(--safeL))}
+#right{left:calc(108px + var(--safeL))}
+
+/* Action */
+#jump{
+  width:96px;height:96px;
+  bottom:calc(22px + var(--safeB));
+  right:calc(22px + var(--safeR));
+}
+#fart{
+  width:88px;height:70px;
+  bottom:calc(130px + var(--safeB));
+  right:calc(26px + var(--safeR));
+  font-size:14px;
+}
+
+/* Top */
+#reset{
+  width:60px;height:44px;
+  top:calc(14px + var(--safeT));
+  right:calc(14px + var(--safeR));
+}
+</style>
+</head>
+
+<body>
+<canvas id="c"></canvas>
+
+<div id="hud">
+  <div id="left"  class="btn">←</div>
+  <div id="right" class="btn">→</div>
+  <div id="jump"  class="btn">JUMP</div>
+  <div id="fart"  class="btn">💨</div>
+  <div id="reset" class="btn">R</div>
+</div>
+
+<script>
+/* ==== iOS ANTI ZOOM ==== */
+["gesturestart","gesturechange","gestureend"].forEach(e=>{
+  document.addEventListener(e,ev=>ev.preventDefault(),{passive:false});
+});
+document.addEventListener("touchmove",e=>e.preventDefault(),{passive:false});
+
+/* ==== Canvas ==== */
+const canvas=document.getElementById("c");
+const ctx=canvas.getContext("2d",{alpha:false});
+function resize(){
+  const dpr=Math.min(3,window.devicePixelRatio||1);
+  canvas.width=innerWidth*dpr;
+  canvas.height=innerHeight*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+addEventListener("resize",resize); resize();
+
+/* ==== Controls ==== */
+const V={l:false,r:false,j:false,f:false};
+function bind(id,k){
+  const el=document.getElementById(id);
+  el.addEventListener("pointerdown",e=>{e.preventDefault();V[k]=true});
+  el.addEventListener("pointerup",e=>{e.preventDefault();V[k]=false});
+  el.addEventListener("pointerleave",()=>V[k]=false);
+}
+bind("left","l"); bind("right","r"); bind("jump","j"); bind("fart","f");
+
+/* ==== Game ==== */
+const GRAV=2200;
+const TILE=48;
+
+const player={
+  x:100,y:200,vx:0,vy:0,
+  kg:55,onGround:false,jumps:2
+};
+
+const level=[
+"############################################################",
+"#..........................................................#",
+"#........o..............o..................o...............#",
+"#..S....######....H....######....L....######.........F.....#",
+"#..........o.................o.................o...........#",
+"#......................V......................A............#",
+"############################################################"
+];
+
+const blocks=[],foods=[],fans=[],pads=[];
+let start={x:0,y:0},finish={x:0,y:0};
+
+level.forEach((r,y)=>{
+  [...r].forEach((c,x)=>{
+    const px=x*TILE,py=y*TILE;
+    if(c=="#")blocks.push({x:px,y:py,w:TILE,h:TILE});
+    if(c=="o")foods.push({x:px+10,y:py+10});
+    if(c=="V")fans.push({x:px,y:py});
+    if(c=="A")pads.push({x:px,y:py});
+    if(c=="S"){player.x=px;player.y=py}
+    if(c=="F")finish={x:px,y:py}
+  });
+});
+
+/* ==== Update ==== */
+function update(dt){
+  player.vy+=GRAV*dt;
+
+  if(V.l) player.vx=-260;
+  else if(V.r) player.vx=260;
+  else player.vx*=0.85;
+
+  if(V.j && player.jumps>0){
+    player.vy=-720+(player.kg-50)*4;
+    player.jumps--; V.j=false;
+  }
+
+  player.x+=player.vx*dt;
+  player.y+=player.vy*dt;
+  player.onGround=false;
+
+  blocks.forEach(b=>{
+    if(player.x< b.x+b.w && player.x+40>b.x &&
+       player.y< b.y+b.h && player.y+40>b.y){
+      if(player.vy>0){
+        player.y=b.y-40;
+        player.vy=0;
+        player.onGround=true;
+        player.jumps=2;
+      }
+    }
+  });
+
+  foods.forEach(f=>{
+    if(Math.abs(player.x-f.x)<30 && Math.abs(player.y-f.y)<30){
+      player.kg+=2; f.y=-999;
+    }
+  });
+
+  if(V.f){
+    player.kg=Math.max(40,player.kg*0.999);
+  }
+}
+
+/* ==== Draw ==== */
+function draw(){
+  ctx.clearRect(0,0,innerWidth,innerHeight);
+
+  // ground
+  ctx.fillStyle="rgba(24,255,214,0.12)";
+  blocks.forEach(b=>ctx.fillRect(b.x,b.y,b.w,b.h));
+
+  // food
+  ctx.fillStyle="#ff6b9b";
+  foods.forEach(f=>ctx.fillRect(f.x,f.y,18,18));
+
+  // player (tròn dần theo kg)
+  const r=20+(player.kg-50)*0.2;
+  ctx.fillStyle="#ffe0c2";
+  ctx.beginPath();
+  ctx.arc(player.x+r,player.y+r,r,0,Math.PI*2);
+  ctx.fill();
+
+  // HUD
+  ctx.fillStyle="rgba(24,255,214,0.14)";
+  ctx.fillRect(10,10,180,36);
+  ctx.fillStyle="#fff";
+  ctx.font="14px system-ui";
+  ctx.fillText("KG: "+player.kg.toFixed(2),20,34);
+}
+
+/* ==== Loop ==== */
+let last=0;
+function loop(t){
+  const dt=(t-last)/1000; last=t;
+  update(dt);
+  draw();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
