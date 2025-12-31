@@ -212,6 +212,8 @@
     margin-bottom:6px;
   }
   .muted{ opacity:0.8; font-weight:800; }
+  #select{ display:none !important; }
+  
 </style>
 </head>
 <body>
@@ -465,6 +467,12 @@
     }
   }
   renderPickers();
+  
+  // ===== AUTO START - BỎ QUA MÀN CHỌN =====
+hudEl.style.display = "block";
+mode = "play";
+applyPickedAvatar(); // dùng nhân vật mặc định
+reset();
 
   /* Start button FIX: click + touchstart */
   function goGame(){
@@ -764,7 +772,7 @@
     ateDuringAir:false
   };
   const cam={x:0,y:0};
-  let mode="select";
+  let mode="play";
 
   function applyPickedAvatar(){
     const c = CHARACTERS.find(x=>x.id===pickedChar) || CHARACTERS[0];
