@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport"
       content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,viewport-fit=cover"/>
-<title>BÀ ĐỤT – V3 Ranking</title>
+<title>BÀ ĐỤT – Final (Auto Start + Ranking)</title>
 <style>
   html,body{
     margin:0;height:100%;
@@ -24,13 +24,13 @@
     background:linear-gradient(180deg,#0a2a3b 0%, #1a0f2f 55%, #1a0f2f 100%);
   }
 
-  #hud{ position:fixed; inset:0; pointer-events:none; touch-action:none; }
   :root{
     --safeT: env(safe-area-inset-top);
     --safeR: env(safe-area-inset-right);
     --safeB: env(safe-area-inset-bottom);
     --safeL: env(safe-area-inset-left);
   }
+  #hud{ position:fixed; inset:0; pointer-events:none; touch-action:none; }
   .btn{
     position:absolute;
     pointer-events:auto;
@@ -81,88 +81,7 @@
     border-radius:14px;
   }
 
-  /* ===== Select Overlay (fixed layout) ===== */
-  #select{
-    position:fixed; inset:0;
-    display:flex;
-    flex-direction:column;
-    justify-content:flex-start;
-    align-items:center;
-    gap:12px;
-    padding:calc(14px + var(--safeT)) calc(14px + var(--safeR)) calc(14px + var(--safeB)) calc(14px + var(--safeL));
-    background:linear-gradient(180deg, rgba(10,42,59,0.90), rgba(26,15,47,0.94));
-    color:#fff;
-    overflow:auto; /* allow scroll on small screens */
-    -webkit-overflow-scrolling:touch;
-  }
-  #title{
-    font-weight:1000;
-    letter-spacing:1px;
-    text-align:center;
-    font-size:20px;
-    margin-top:6px;
-  }
-  #subtitle{
-    opacity:0.92;
-    font-weight:800;
-    text-align:center;
-    font-size:12px;
-    line-height:1.35;
-    max-width:560px;
-  }
-  .row{
-    display:flex;
-    gap:10px;
-    flex-wrap:wrap;
-    justify-content:center;
-    width:min(560px, 96vw);
-  }
-  .card{
-    flex:0 1 160px;
-    width:160px;
-    max-width:44vw;
-    padding:10px;
-    border-radius:18px;
-    background:rgba(30,255,214,0.14);
-    border:1px solid rgba(30,255,214,0.35);
-    box-shadow:0 10px 28px rgba(0,0,0,.22);
-  }
-  .card.active{
-    outline:2px solid rgba(255,107,155,0.75);
-    background:rgba(255,107,155,0.16);
-  }
-  .card h3{ margin:6px 0 2px; font-size:13px; }
-  .card p{ margin:0; opacity:0.85; font-size:11.5px; line-height:1.3; }
-
-  .pickbtn{
-    margin-top:10px;
-    width:100%;
-    height:42px;
-    border-radius:14px;
-    border:1px solid rgba(30,255,214,0.45);
-    background:rgba(30,255,214,0.18);
-    color:#fff;
-    font-weight:950;
-    touch-action:none;
-  }
-  .pickbtn:active{ background:rgba(255,107,155,0.25); transform:scale(.99); }
-
-  #startBtn{
-    width:min(380px, 94vw);
-    height:52px;
-    border-radius:18px;
-    border:1px solid rgba(30,255,214,0.60);
-    background:rgba(30,255,214,0.24);
-    color:#fff;
-    font-weight:1000;
-    font-size:16px;
-    letter-spacing:0.6px;
-    touch-action:none;
-    margin:4px 0 10px;
-  }
-  #startBtn:active{ background:rgba(255,107,155,0.30); transform:scale(.99); }
-
-  /* ===== End overlay (win/lose + ranking) ===== */
+  /* End overlay (win/lose + ranking) */
   #end{
     position:fixed; inset:0;
     display:none;
@@ -212,25 +131,10 @@
     margin-bottom:6px;
   }
   .muted{ opacity:0.8; font-weight:800; }
-  #select{ display:none !important; }
-  
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
-
-<!-- Select -->
-<div id="select">
-  <div id="title">BÀ ĐỤT • CHỌN NHÂN VẬT & OUTFIT</div>
-  <div id="subtitle">
-    • Mập quá: không chui lọt cửa hẹp 🧱 • Ốm quá: không mở cửa cân nặng ⚖️<br/>
-    • Đến WC bấm “WC” để -1% kg 🚽 • 💨 giảm cực nhẹ<br/>
-    • Né đồ ăn rơi + nhảy sạch để lấy điểm 🎯 • >130kg = THUA
-  </div>
-  <div class="row" id="charRow"></div>
-  <div class="row" id="outfitRow"></div>
-  <button id="startBtn">VÀO GAME</button>
-</div>
 
 <!-- HUD -->
 <div id="hud" style="display:none;">
@@ -247,12 +151,11 @@
   <div id="endCard">
     <div id="endTitle">Kết quả</div>
     <div id="endInfo"></div>
-    <div class="rankTitle">🏆 Ranking (Top 10)</div>
+    <div class="rankTitle">🏆 Ranking (Top 10 – chỉ tính khi THẮNG)</div>
     <div id="rankList"></div>
     <div class="muted" id="bestLine"></div>
     <div class="endBtns">
       <button class="endBtn" id="againBtn">CHƠI LẠI</button>
-      <button class="endBtn" id="backBtn">ĐỔI NHÂN VẬT</button>
       <button class="endBtn" id="clearBtn">XOÁ RANKING</button>
     </div>
   </div>
@@ -260,7 +163,7 @@
 
 <script>
 (() => {
-  /* ================= iOS ANTI-ZOOM ================= */
+  /* ================= iOS ANTI-ZOOM / NO SCROLL ================= */
   ["gesturestart","gesturechange","gestureend"].forEach(evt=>{
     document.addEventListener(evt, e=>e.preventDefault(), {passive:false});
   });
@@ -288,7 +191,7 @@
   resize();
   const W=()=>innerWidth, H=()=>innerHeight;
 
-  /* ================= Audio ================= */
+  /* ================= Audio (simple sfx) ================= */
   let AC=null, audioOn=true, unlocked=false;
   function ensureAudio(){ if(!AC) AC = new (window.AudioContext||window.webkitAudioContext)(); }
   function unlockAudio(){
@@ -339,7 +242,6 @@
   /* ================= Helpers ================= */
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
   const rects=(a,b)=>a.x<b.x+b.w && a.x+a.w>b.x && a.y<b.y+b.h && a.y+a.h>b.y;
-
   function rr(x,y,w,h,r){
     r=Math.min(r,w/2,h/2);
     ctx.beginPath();
@@ -351,237 +253,8 @@
     ctx.closePath();
   }
 
-  /* ================= Select UI ================= */
-  const selectEl = document.getElementById("select");
+  /* ================= UI Buttons ================= */
   const hudEl = document.getElementById("hud");
-  const charRow = document.getElementById("charRow");
-  const outfitRow = document.getElementById("outfitRow");
-  const startBtn = document.getElementById("startBtn");
-
-  const CHARACTERS = [
-    { id:"badut",  name:"Bà Đụt", base:"#ffe0c2", hair:"#2b1a3b", vibe:"Cười hiền • Má hồng" },
-    { id:"banu",   name:"Bà Nụ",  base:"#ffe7d6", hair:"#0b0f1f", vibe:"Mắt long lanh • Dịu dàng" },
-    { id:"bapop",  name:"Bà Pốp", base:"#ffe0cc", hair:"#3b1342", vibe:"Năng lượng • Lém lỉnh" },
-  ];
-  const OUTFITS = [
-    { id:"none",  name:"Basic",  desc:"Áo trơn" },
-    { id:"hat",   name:"Mũ cute",desc:"Mũ tai bèo" },
-    { id:"dress", name:"Váy",    desc:"Váy pastel" },
-    { id:"bag",   name:"Túi",    desc:"Túi xinh" },
-  ];
-  let pickedChar = CHARACTERS[0].id;
-  let pickedOutfit = OUTFITS[0].id;
-
-  function roundRect(g,x,y,w,h,r){
-    r=Math.min(r,w/2,h/2);
-    g.beginPath();
-    g.moveTo(x+r,y);
-    g.arcTo(x+w,y,x+w,y+h,r);
-    g.arcTo(x+w,y+h,x,y+h,r);
-    g.arcTo(x,y+h,x,y,r);
-    g.arcTo(x,y,x+w,y,r);
-    g.closePath();
-  }
-
-  function drawAvatarPreview(g, c, outfitId){
-    g.clearRect(0,0,140,86);
-    const grd=g.createLinearGradient(0,0,0,86);
-    grd.addColorStop(0,"rgba(30,255,214,0.22)");
-    grd.addColorStop(1,"rgba(255,107,155,0.18)");
-    g.fillStyle=grd; g.fillRect(0,0,140,86);
-
-    const r=26, cx=52, cy=44;
-    g.fillStyle=c.hair;
-    roundRect(g, cx-r*1.1, cy-r*1.25, r*2.2, r*0.8, 10); g.fill();
-
-    g.fillStyle=c.base;
-    g.beginPath(); g.arc(cx,cy,r,0,Math.PI*2); g.fill();
-
-    g.fillStyle="rgba(255,107,155,0.35)";
-    g.beginPath(); g.arc(cx-r*0.45, cy+r*0.10, r*0.18, 0, Math.PI*2); g.fill();
-    g.beginPath(); g.arc(cx+r*0.45, cy+r*0.10, r*0.18, 0, Math.PI*2); g.fill();
-
-    g.fillStyle="#0b0f1f";
-    g.beginPath(); g.arc(cx-r*0.26, cy-r*0.10, r*0.11, 0, Math.PI*2); g.fill();
-    g.beginPath(); g.arc(cx+r*0.26, cy-r*0.10, r*0.11, 0, Math.PI*2); g.fill();
-
-    g.fillStyle="rgba(255,255,255,0.9)";
-    g.beginPath(); g.arc(cx-r*0.22, cy-r*0.15, r*0.04, 0, Math.PI*2); g.fill();
-    g.beginPath(); g.arc(cx+r*0.22, cy-r*0.15, r*0.04, 0, Math.PI*2); g.fill();
-
-    g.strokeStyle="#7a3f2b";
-    g.lineWidth=3;
-    g.beginPath(); g.arc(cx, cy+r*0.18, r*0.18, 0, Math.PI); g.stroke();
-
-    // outfit stamp
-    g.save();
-    g.translate(98, 40);
-    g.fillStyle="rgba(0,0,0,0.22)";
-    roundRect(g, -26,-22, 52,44, 12); g.fill();
-    g.fillStyle="rgba(255,255,255,0.88)";
-    g.font="900 12px system-ui";
-    g.fillText(outfitId.toUpperCase(), -22, 4);
-    g.restore();
-  }
-
-  function renderPickers(){
-    charRow.innerHTML="";
-    for(const c of CHARACTERS){
-      const div=document.createElement("div");
-      div.className="card"+(pickedChar===c.id?" active":"");
-      div.innerHTML = `
-        <canvas width="140" height="86" style="width:100%;height:auto;border-radius:14px;background:rgba(0,0,0,0.20);border:1px solid rgba(255,255,255,0.12)"></canvas>
-        <h3>${c.name}</h3>
-        <p>${c.vibe}</p>
-        <button class="pickbtn">CHỌN</button>
-      `;
-      div.querySelector(".pickbtn").addEventListener("click",(e)=>{
-        e.preventDefault(); unlockAudio(); sfx("ui");
-        pickedChar=c.id; renderPickers();
-      });
-      div.querySelector(".pickbtn").addEventListener("touchstart",(e)=>{
-        e.preventDefault(); unlockAudio(); sfx("ui");
-        pickedChar=c.id; renderPickers();
-      }, {passive:false});
-      const cv=div.querySelector("canvas");
-      drawAvatarPreview(cv.getContext("2d"), c, pickedOutfit);
-      charRow.appendChild(div);
-    }
-
-    outfitRow.innerHTML="";
-    for(const o of OUTFITS){
-      const div=document.createElement("div");
-      div.className="card"+(pickedOutfit===o.id?" active":"");
-      div.innerHTML=`
-        <h3>${o.name}</h3>
-        <p>${o.desc}</p>
-        <button class="pickbtn">CHỌN OUTFIT</button>
-      `;
-      const choose=()=>{
-        unlockAudio(); sfx("ui");
-        pickedOutfit=o.id; renderPickers();
-      };
-      div.querySelector(".pickbtn").addEventListener("click",(e)=>{e.preventDefault(); choose();});
-      div.querySelector(".pickbtn").addEventListener("touchstart",(e)=>{e.preventDefault(); choose();},{passive:false});
-      outfitRow.appendChild(div);
-    }
-  }
-  renderPickers();
-  
-  // ===== AUTO START - BỎ QUA MÀN CHỌN =====
-hudEl.style.display = "block";
-mode = "play";
-applyPickedAvatar(); // dùng nhân vật mặc định
-reset();
-
-  /* Start button FIX: click + touchstart */
-  function goGame(){
-    unlockAudio(); sfx("ui");
-    selectEl.style.display="none";
-    hudEl.style.display="block";
-    mode="play";
-    applyPickedAvatar();
-    reset();
-  }
-  startBtn.addEventListener("click",(e)=>{ e.preventDefault(); goGame(); });
-  startBtn.addEventListener("touchstart",(e)=>{ e.preventDefault(); goGame(); }, {passive:false});
-
-  /* ================= End overlay + Ranking ================= */
-  const endEl = document.getElementById("end");
-  const endTitle = document.getElementById("endTitle");
-  const endInfo = document.getElementById("endInfo");
-  const rankList = document.getElementById("rankList");
-  const bestLine = document.getElementById("bestLine");
-  const againBtn = document.getElementById("againBtn");
-  const backBtn = document.getElementById("backBtn");
-  const clearBtn = document.getElementById("clearBtn");
-
-  const LS_KEY="badut_ranking_v3";
-  const BEST_KEY="badut_best_v3";
-
-  function loadRanking(){
-    try{ return JSON.parse(localStorage.getItem(LS_KEY) || "[]"); }
-    catch{ return []; }
-  }
-  function saveRanking(arr){
-    localStorage.setItem(LS_KEY, JSON.stringify(arr));
-  }
-  function getBest(){ return Number(localStorage.getItem(BEST_KEY) || 0); }
-  function setBest(v){ localStorage.setItem(BEST_KEY, String(v)); }
-
-  function renderRanking(){
-    const arr=loadRanking();
-    rankList.innerHTML="";
-    if(arr.length===0){
-      rankList.innerHTML = `<div class="muted">Chưa có ai lên bảng xếp hạng.</div>`;
-    }else{
-      arr.slice(0,10).forEach((e,i)=>{
-        const line=document.createElement("div");
-        line.className="rankRow";
-        line.innerHTML = `
-          <div>#${i+1} • ${e.name} <span class="muted">(${e.outfit})</span></div>
-          <div>${Math.floor(e.score)} pts</div>
-        `;
-        rankList.appendChild(line);
-      });
-    }
-    bestLine.textContent = `High Score hiện tại: ${Math.floor(getBest())} pts`;
-  }
-
-  function pushRanking(entry){
-    const arr=loadRanking();
-    arr.push(entry);
-    arr.sort((a,b)=>b.score-a.score);
-    const top=arr.slice(0,10);
-    saveRanking(top);
-    return top;
-  }
-
-  function showEnd(type){
-    // type: "lose" | "win"
-    mode="end";
-    endEl.style.display="flex";
-
-    const best=getBest();
-    if(player.score > best) setBest(player.score);
-
-    const name = player.skin.name;
-    const outfit = player.outfit;
-    const entry = { name, outfit, score: player.score, ts: Date.now() };
-
-    // thắng mới vào ranking (theo yêu cầu)
-    if(type==="win"){
-      pushRanking(entry);
-    } else {
-      // thua vẫn ghi nhận best (đã lưu), nhưng không vào ranking (theo yêu cầu: “ai thắng… vào ranking”)
-      // nếu bạn muốn thua cũng vào ranking thì đổi logic ở đây.
-    }
-
-    renderRanking();
-
-    if(type==="win"){
-      endTitle.textContent = "🎉 THẮNG!";
-      endInfo.textContent = `Bạn đã giảm cân thành công! Điểm của bạn: ${Math.floor(player.score)} pts • KG kết thúc: ${player.kg.toFixed(2)}`;
-    }else{
-      endTitle.textContent = "😵 THUA!";
-      endInfo.textContent = `Bạn đã thua (quá cân / rơi). Điểm của bạn: ${Math.floor(player.score)} pts • KG: ${player.kg.toFixed(2)}`;
-    }
-  }
-
-  function hideEnd(){
-    endEl.style.display="none";
-  }
-
-  againBtn.addEventListener("click",(e)=>{ e.preventDefault(); unlockAudio(); sfx("ui"); hideEnd(); mode="play"; reset(); });
-  againBtn.addEventListener("touchstart",(e)=>{ e.preventDefault(); unlockAudio(); sfx("ui"); hideEnd(); mode="play"; reset(); }, {passive:false});
-
-  backBtn.addEventListener("click",(e)=>{ e.preventDefault(); unlockAudio(); sfx("ui"); hideEnd(); mode="select"; hudEl.style.display="none"; selectEl.style.display="flex"; renderPickers(); });
-  backBtn.addEventListener("touchstart",(e)=>{ e.preventDefault(); unlockAudio(); sfx("ui"); hideEnd(); mode="select"; hudEl.style.display="none"; selectEl.style.display="flex"; renderPickers(); }, {passive:false});
-
-  clearBtn.addEventListener("click",(e)=>{ e.preventDefault(); unlockAudio(); sfx("ui"); saveRanking([]); setBest(0); renderRanking(); });
-  clearBtn.addEventListener("touchstart",(e)=>{ e.preventDefault(); unlockAudio(); sfx("ui"); saveRanking([]); setBest(0); renderRanking(); }, {passive:false});
-
-  /* ================= HUD input ================= */
   const V = {l:false,r:false,j:false,f:false,p:false, reset:false};
   function bindHold(id, key){
     const el=document.getElementById(id);
@@ -605,7 +278,67 @@ reset();
   resetBtn.addEventListener("touchstart",(e)=>{e.preventDefault(); unlockAudio(); V.reset=true;},{passive:false});
   resetBtn.addEventListener("pointerdown",(e)=>{e.preventDefault(); unlockAudio(); V.reset=true;},{passive:false});
 
-  /* ================= Food icons ================= */
+  /* ================= Ranking ================= */
+  const endEl = document.getElementById("end");
+  const endTitle = document.getElementById("endTitle");
+  const endInfo = document.getElementById("endInfo");
+  const rankList = document.getElementById("rankList");
+  const bestLine = document.getElementById("bestLine");
+  const againBtn = document.getElementById("againBtn");
+  const clearBtn = document.getElementById("clearBtn");
+
+  const LS_KEY="badut_ranking_final";
+  const BEST_KEY="badut_best_final";
+
+  function loadRanking(){
+    try{ return JSON.parse(localStorage.getItem(LS_KEY) || "[]"); }
+    catch{ return []; }
+  }
+  function saveRanking(arr){ localStorage.setItem(LS_KEY, JSON.stringify(arr)); }
+  function getBest(){ return Number(localStorage.getItem(BEST_KEY) || 0); }
+  function setBest(v){ localStorage.setItem(BEST_KEY, String(v)); }
+
+  function pushRanking(entry){
+    const arr=loadRanking();
+    arr.push(entry);
+    arr.sort((a,b)=>b.score-a.score);
+    saveRanking(arr.slice(0,10));
+  }
+  function renderRanking(){
+    const arr=loadRanking();
+    rankList.innerHTML="";
+    if(arr.length===0){
+      rankList.innerHTML = `<div class="muted">Chưa có ai thắng để vào bảng ranking.</div>`;
+    }else{
+      arr.forEach((e,i)=>{
+        const line=document.createElement("div");
+        line.className="rankRow";
+        line.innerHTML = `<div>#${i+1} • ${e.name}</div><div>${Math.floor(e.score)} pts</div>`;
+        rankList.appendChild(line);
+      });
+    }
+    bestLine.textContent = `High Score (mọi lượt chơi): ${Math.floor(getBest())} pts`;
+  }
+  function showEnd(type, reason=""){
+    endEl.style.display="flex";
+    renderRanking();
+    if(type==="win"){
+      endTitle.textContent = "🎉 THẮNG!";
+      endInfo.textContent = `Bạn đã giảm cân thành công! Điểm: ${Math.floor(player.score)} pts • KG: ${player.kg.toFixed(2)}`;
+    }else{
+      endTitle.textContent = "😵 THUA!";
+      endInfo.textContent = `Lý do: ${reason || "Quá cân / rơi"} • Điểm: ${Math.floor(player.score)} pts • KG: ${player.kg.toFixed(2)}`;
+    }
+  }
+  function hideEnd(){ endEl.style.display="none"; }
+
+  againBtn.addEventListener("click",(e)=>{ e.preventDefault(); unlockAudio(); sfx("ui"); hideEnd(); mode="play"; reset(); });
+  againBtn.addEventListener("touchstart",(e)=>{ e.preventDefault(); unlockAudio(); sfx("ui"); hideEnd(); mode="play"; reset(); }, {passive:false});
+
+  clearBtn.addEventListener("click",(e)=>{ e.preventDefault(); unlockAudio(); sfx("ui"); saveRanking([]); setBest(0); renderRanking(); });
+  clearBtn.addEventListener("touchstart",(e)=>{ e.preventDefault(); unlockAudio(); sfx("ui"); saveRanking([]); setBest(0); renderRanking(); }, {passive:false});
+
+  /* ================= Food definitions ================= */
   const FOODS = [
     {id:"milk", name:"Trà sữa",  kg:1.5},
     {id:"ice",  name:"Kem",      kg:2.5},
@@ -743,7 +476,7 @@ reset();
       def,
       dodged:false, eaten:false
     });
-    if(falling.length>110) falling.splice(0, falling.length-110);
+    if(falling.length>120) falling.splice(0, falling.length-120);
   }
 
   /* ================= Player ================= */
@@ -760,25 +493,16 @@ reset();
     jumps:2,
     fartCD:0,
     poopCD:0,
-    dead:false,
     score:0,
     facing:1,
     runT:0,
     blinkT:0,
     skin: { base:"#ffe0c2", hair:"#2b1a3b", name:"Bà Đụt" },
-    outfit:"none",
-    // scoring states
     inAir:false,
     ateDuringAir:false
   };
   const cam={x:0,y:0};
-  let mode="play";
-
-  function applyPickedAvatar(){
-    const c = CHARACTERS.find(x=>x.id===pickedChar) || CHARACTERS[0];
-    player.skin = { base:c.base, hair:c.hair, name:c.name };
-    player.outfit = pickedOutfit;
-  }
+  let mode="play"; // AUTO PLAY
 
   function kgT(){ return clamp((player.kg-50)/(125-50),0,1); }
   function radius(){ const t=kgT(); return 18 + t*18; }
@@ -790,7 +514,6 @@ reset();
     player.kg=55; player.jumps=2;
     player.onGround=false;
     player.fartCD=0; player.poopCD=0;
-    player.dead=false;
     player.score=0;
     player.facing=1;
     player.inAir=false;
@@ -798,7 +521,7 @@ reset();
     for(const f of foodsStatic) f.alive=true;
     falling.length=0; particles.length=0; popups.length=0;
     for(const d of doors) d.open=false;
-    popup(`Xin chào ${player.skin.name}!`, player.x, player.y-20);
+    popup(`BÀ ĐỤT XUẤT PHÁT!`, player.x, player.y-20);
   }
 
   function nearToilet(pr){
@@ -813,9 +536,7 @@ reset();
     if(mode!=="play") return;
     mode="end";
     sfx("hit");
-    // record best always
-    const best=getBest();
-    if(player.score > best) setBest(player.score);
+    if(player.score > getBest()) setBest(player.score);
     showEnd("lose", reason);
   }
 
@@ -823,25 +544,10 @@ reset();
     if(mode!=="play") return;
     mode="end";
     sfx("door");
-    // best
-    const best=getBest();
-    if(player.score > best) setBest(player.score);
-    // push ranking (win only)
-    pushRanking({ name: player.skin.name, outfit: player.outfit, score: player.score, ts: Date.now() });
+    if(player.score > getBest()) setBest(player.score);
+    // chỉ thắng mới vào ranking
+    pushRanking({ name: player.skin.name, score: player.score, ts: Date.now() });
     showEnd("win");
-  }
-
-  function showEnd(type, reasonText=""){
-    endEl.style.display="flex";
-    renderRanking();
-
-    if(type==="win"){
-      endTitle.textContent = "🎉 THẮNG!";
-      endInfo.textContent = `Bạn đã giảm cân thành công! Điểm: ${Math.floor(player.score)} pts • KG: ${player.kg.toFixed(2)}`;
-    }else{
-      endTitle.textContent = "😵 THUA!";
-      endInfo.textContent = `Lý do: ${reasonText || "Quá cân / rơi"} • Điểm: ${Math.floor(player.score)} pts • KG: ${player.kg.toFixed(2)}`;
-    }
   }
 
   function step(dt){
@@ -852,7 +558,7 @@ reset();
 
     // spawn falling foods
     fallTimer += dt;
-    const rate = 1.2;
+    const rate = 1.25;
     while(fallTimer > 1/rate){ fallTimer -= 1/rate; spawnFalling(cam.x, cam.y); }
 
     // update particles/popups
@@ -871,7 +577,7 @@ reset();
       if(p.t >= p.life) popups.splice(i,1);
     }
 
-    // falling foods update + dodge scoring
+    // falling foods + dodge score
     for(let i=falling.length-1;i>=0;i--){
       const f=falling[i];
       f.vy += 520*dt;
@@ -879,23 +585,18 @@ reset();
       f.y += f.vy*dt;
       f.rot += f.vr*dt;
 
-      // dodge: when it passes below player without being eaten AND was "close enough" in x
       const r=radius();
       const pcx = player.x + r;
       if(!f.dodged && !f.eaten && f.y > player.y + r*2 + 10){
         const fx = f.x + f.size/2;
         if(Math.abs(fx - pcx) < 120){
           f.dodged=true;
-          player.score += 3; // dodge points
+          player.score += 3;
           popup("+DODGE", fx-16, f.y-10);
         }
       }
-
-      // offscreen => bonus dodge (if not eaten)
       if(f.y > cam.y + H() + 320){
-        if(!f.eaten){
-          player.score += 2;
-        }
+        if(!f.eaten) player.score += 2;
         falling.splice(i,1);
       }
     }
@@ -913,7 +614,6 @@ reset();
     if(!V.l && !V.r) player.vx *= Math.pow(0.82, 60*dt);
     player.vx = clamp(player.vx, -MAXS, MAXS);
 
-    // run anim
     const moving = Math.abs(player.vx) > 20;
     if(moving && player.onGround) player.runT += dt*(1.6 + Math.abs(player.vx)/MAXS);
     else player.runT *= 0.96;
@@ -929,7 +629,7 @@ reset();
     }
     step.prevJ = V.j;
 
-    // fart (tiny reduce) + smoke from behind
+    // fart (tiny reduce)
     if(V.f && player.fartCD<=0){
       const before=player.kg;
       player.kg = Math.max(KG_MIN, player.kg * 0.999);
@@ -959,35 +659,29 @@ reset();
     player.x += player.vx*dt;
     pr.x = player.x;
 
-    // collide solids
     for(const b of blocks){
       if(!rects(pr,b)) continue;
       if(player.vx>0) player.x = b.x - pr.w;
       else if(player.vx<0) player.x = b.x + b.w;
-      player.vx=0;
-      pr.x = player.x;
+      player.vx=0; pr.x=player.x;
     }
 
-    // narrow gates
     for(const n of narrows){
       if(!rects(pr,n)) continue;
       if(r > n.gateR){
         if(player.vx>0) player.x = n.x - pr.w;
         else if(player.vx<0) player.x = n.x + n.w;
-        player.vx=0;
-        pr.x=player.x;
+        player.vx=0; pr.x=player.x;
         popup("MẬP QUÁ KHÔNG CHUI LỌT!", n.x-20, n.y-10);
       }
     }
 
-    // weight doors (closed => solid)
     for(const d of doors){
       if(d.open) continue;
       if(!rects(pr,d)) continue;
       if(player.vx>0) player.x = d.x - pr.w;
       else if(player.vx<0) player.x = d.x + d.w;
-      player.vx=0;
-      pr.x=player.x;
+      player.vx=0; pr.x=player.x;
       popup(`ỐM QUÁ! CẦN ≥ ${d.reqKg}KG`, d.x-30, d.y-10);
     }
 
@@ -1011,10 +705,9 @@ reset();
       pr.y=player.y;
     }
 
-    // landing => clean jump bonus if no eating during air
     if(!wasOnGround && player.onGround && player.inAir){
       if(!player.ateDuringAir){
-        player.score += 2; // clean jump points
+        player.score += 2;
         popup("+CLEAN JUMP", player.x+r-24, player.y-18);
       }
       player.inAir=false;
@@ -1026,7 +719,6 @@ reset();
       if(rects(pr,f)){
         f.alive=false;
         player.kg = Math.min(KG_MAX, player.kg + f.def.kg);
-        player.score += 1; // small score even if eat
         spawnSparkle(f.x+14, f.y+14, 10);
         popup(`+${f.def.kg}kg`, f.x, f.y-8);
         player.ateDuringAir = player.ateDuringAir || !player.onGround;
@@ -1041,7 +733,6 @@ reset();
       if(hit){
         f.eaten=true;
         player.kg = Math.min(KG_MAX, player.kg + f.def.kg);
-        player.score += 0.5;
         spawnSparkle(f.x+f.size/2, f.y+f.size/2, 10);
         popup(`+${f.def.kg}kg`, f.x, f.y-8);
         player.ateDuringAir = player.ateDuringAir || !player.onGround;
@@ -1058,7 +749,7 @@ reset();
       player.poopCD = 0.6;
       spawnSparkle(toilet.x + toilet.w/2, toilet.y + toilet.h/2, 14);
       popup(`-1% (${(before-player.kg).toFixed(2)}kg)`, toilet.x-10, toilet.y-12);
-      player.score += 2; // reward correct strategy
+      player.score += 2;
       sfx("poop");
     } else if(!toilet && V.p){
       popup("TÌM WC ĐÃ!", player.x + r - 10, player.y - 18);
@@ -1069,13 +760,11 @@ reset();
       lose("VƯỢT 130KG");
       return;
     }
-
     // lose: fall
     if(player.y > worldH + 280){
       lose("RƠI KHỎI MAP");
       return;
     }
-
     // win: reach finish AND under target kg
     if(rects(pr, finish)){
       if(player.kg <= TARGET_KG){
@@ -1087,7 +776,7 @@ reset();
     }
   }
 
-  /* ================= Background ================= */
+  /* ================= Background (cartoon city) ================= */
   function drawBG(t){
     const g=ctx.createLinearGradient(0,0,0,H());
     g.addColorStop(0,"#18ffd6");
@@ -1095,7 +784,7 @@ reset();
     g.addColorStop(1,"#ff6b9b");
     ctx.fillStyle=g; ctx.fillRect(0,0,W(),H());
 
-    // parallax skyline feel
+    // far skyline
     ctx.save();
     ctx.globalAlpha=0.20;
     ctx.translate(- (cam.x*0.18)%420, 0);
@@ -1105,8 +794,9 @@ reset();
     }
     ctx.restore();
 
+    // mid skyline + neon signs
     ctx.save();
-    ctx.globalAlpha=0.28;
+    ctx.globalAlpha=0.30;
     ctx.translate(- (cam.x*0.32)%520, 0);
     for(let i=0;i<10;i++){
       const x=i*190;
@@ -1114,8 +804,17 @@ reset();
       drawNeonSign(x+24, H()*0.50 + 40, 80, 26, (Math.sin(t*3+i)*0.5+0.5));
     }
     ctx.restore();
-  }
 
+    // floating bubbles
+    ctx.save();
+    ctx.globalAlpha=0.12;
+    for(let i=0;i<10;i++){
+      const bx = (i*180 + (Math.sin(t*0.8+i)*90) + (cam.x*0.1)) % (W()+200) - 100;
+      const by = 80 + i*42 + (Math.cos(t*0.7+i)*18);
+      ctx.beginPath(); ctx.arc(bx, by, 22, 0, Math.PI*2); ctx.fillStyle="#fff"; ctx.fill();
+    }
+    ctx.restore();
+  }
   function drawBuilding(x, baseY, w, h, color){
     ctx.fillStyle=color;
     rr(x, baseY, w, h, 18); ctx.fill();
@@ -1140,7 +839,6 @@ reset();
 
   /* ================= Draw world ================= */
   function drawWorld(t){
-    // camera follow
     cam.x = clamp(player.x - W()*0.45, 0, Math.max(0, worldW - W()));
     cam.y = clamp(player.y - H()*0.55, 0, Math.max(0, worldH - H()));
 
@@ -1256,21 +954,6 @@ reset();
     ctx.fill();
     ctx.globalAlpha=1;
 
-    // outfit
-    if(player.outfit==="dress"){
-      ctx.fillStyle="rgba(255,107,155,0.22)";
-      rr(-r*0.85, r*0.18, r*1.70, r*0.75, r*0.22); ctx.fill();
-    }
-    if(player.outfit==="bag"){
-      ctx.fillStyle="rgba(30,255,214,0.22)";
-      rr(r*0.55, r*0.10, r*0.45, r*0.52, r*0.18); ctx.fill();
-      ctx.strokeStyle="rgba(255,255,255,0.30)";
-      ctx.lineWidth=Math.max(2, r*0.06);
-      ctx.beginPath();
-      ctx.arc(r*0.78, r*0.10, r*0.22, Math.PI, 0);
-      ctx.stroke();
-    }
-
     // face
     ctx.fillStyle=player.skin.base;
     ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fill();
@@ -1280,13 +963,6 @@ reset();
     rr(-r*0.70, -r*0.95, r*1.40, r*0.48, r*0.22); ctx.fill();
     ctx.fillStyle="rgba(255,255,255,0.18)";
     rr(-r*0.35, -r*0.85, r*0.35, r*0.18, r*0.10); ctx.fill();
-
-    if(player.outfit==="hat"){
-      ctx.fillStyle="rgba(30,255,214,0.25)";
-      rr(-r*0.75, -r*1.22, r*1.50, r*0.36, r*0.18); ctx.fill();
-      ctx.fillStyle="rgba(255,107,155,0.22)";
-      rr(-r*0.45, -r*1.38, r*0.90, r*0.28, r*0.16); ctx.fill();
-    }
 
     // cheeks
     ctx.fillStyle="rgba(255,107,155,0.35)";
@@ -1326,10 +1002,10 @@ reset();
 
   function drawHUD(){
     ctx.fillStyle="rgba(24,255,214,0.14)";
-    rr(12, 12, 340, 62, 16); ctx.fill();
+    rr(12, 12, 360, 62, 16); ctx.fill();
     ctx.strokeStyle="rgba(255,107,155,0.28)";
     ctx.lineWidth=2;
-    rr(14, 14, 336, 58, 15); ctx.stroke();
+    rr(14, 14, 356, 58, 15); ctx.stroke();
 
     ctx.fillStyle="#ffffff";
     ctx.font="1000 14px system-ui";
@@ -1337,41 +1013,7 @@ reset();
 
     ctx.font="850 12px system-ui";
     ctx.fillStyle="rgba(255,255,255,0.88)";
-    ctx.fillText(`Thắng khi ≤${TARGET_KG}kg & tới đích • >${LOSE_KG}kg là thua`, 26, 58);
-  }
-
-  /* ================= Ranking storage funcs ================= */
-  function loadRanking(){
-    try{ return JSON.parse(localStorage.getItem(LS_KEY) || "[]"); }
-    catch{ return []; }
-  }
-  function saveRanking(arr){ localStorage.setItem(LS_KEY, JSON.stringify(arr)); }
-  function getBest(){ return Number(localStorage.getItem(BEST_KEY) || 0); }
-  function setBest(v){ localStorage.setItem(BEST_KEY, String(v)); }
-
-  function pushRanking(entry){
-    const arr=loadRanking();
-    arr.push(entry);
-    arr.sort((a,b)=>b.score-a.score);
-    saveRanking(arr.slice(0,10));
-  }
-  function renderRanking(){
-    const arr=loadRanking();
-    rankList.innerHTML="";
-    if(arr.length===0){
-      rankList.innerHTML = `<div class="muted">Chưa có ai thắng để vào bảng ranking.</div>`;
-    }else{
-      arr.forEach((e,i)=>{
-        const line=document.createElement("div");
-        line.className="rankRow";
-        line.innerHTML = `
-          <div>#${i+1} • ${e.name} <span class="muted">(${e.outfit})</span></div>
-          <div>${Math.floor(e.score)} pts</div>
-        `;
-        rankList.appendChild(line);
-      });
-    }
-    bestLine.textContent = `High Score (mọi lượt chơi): ${Math.floor(getBest())} pts`;
+    ctx.fillText(`Né đồ rơi + clean jump lấy điểm • Thắng khi ≤${TARGET_KG}kg • >${LOSE_KG}kg thua`, 26, 58);
   }
 
   /* ================= Game loop ================= */
@@ -1399,6 +1041,7 @@ reset();
     const t = ts/1000;
     ctx.clearRect(0,0,W(),H());
     drawBG(t);
+
     if(mode==="play"){
       drawWorld(t);
       drawHUD();
@@ -1406,6 +1049,11 @@ reset();
 
     requestAnimationFrame(loop);
   }
+
+  /* ================= AUTO START (FIX TRẮNG MÀN HÌNH) ================= */
+  hudEl.style.display="block";
+  mode="play";
+  reset();
   requestAnimationFrame(loop);
 
 })();
