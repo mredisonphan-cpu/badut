@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport"
       content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,viewport-fit=cover"/>
-<title>BÀ ĐỤT – Art & Sound Edition</title>
+<title>BÀ ĐỤT – Full V2</title>
 <style>
   html,body{
     margin:0;height:100%;
@@ -24,6 +24,7 @@
     background:linear-gradient(180deg,#0a2a3b 0%, #1a0f2f 55%, #1a0f2f 100%);
   }
 
+  /* HUD controls */
   #hud{ position:fixed; inset:0; pointer-events:none; touch-action:none; }
   :root{
     --safeT: env(safe-area-inset-top);
@@ -68,6 +69,12 @@
     right:calc(20px + var(--safeR));
     font-size:18px;
   }
+  #poop{
+    width:88px;height:70px;
+    bottom:calc(202px + var(--safeB));
+    right:calc(20px + var(--safeR));
+    font-size:16px;
+  }
   #reset{
     width:60px;height:44px;
     top:calc(12px + var(--safeT));
@@ -75,16 +82,105 @@
     font-size:14px;
     border-radius:14px;
   }
+
+  /* Character select overlay */
+  #select{
+    position:fixed; inset:0;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    gap:14px;
+    padding:calc(18px + var(--safeT)) calc(16px + var(--safeR)) calc(20px + var(--safeB)) calc(16px + var(--safeL));
+    background:linear-gradient(180deg, rgba(10,42,59,0.88), rgba(26,15,47,0.92));
+    color:#fff;
+  }
+  #title{
+    font-weight:1000;
+    letter-spacing:1px;
+    text-align:center;
+    font-size:22px;
+  }
+  #subtitle{
+    opacity:0.9;
+    font-weight:800;
+    text-align:center;
+    font-size:13px;
+    line-height:1.35;
+    max-width:520px;
+  }
+  .row{
+    display:flex; gap:12px; flex-wrap:wrap;
+    justify-content:center;
+  }
+  .card{
+    width:160px; max-width:44vw;
+    padding:12px;
+    border-radius:18px;
+    background:rgba(30,255,214,0.14);
+    border:1px solid rgba(30,255,214,0.35);
+    box-shadow:0 10px 28px rgba(0,0,0,.22);
+  }
+  .card.active{
+    outline:2px solid rgba(255,107,155,0.75);
+    background:rgba(255,107,155,0.16);
+  }
+  .card h3{ margin:6px 0 2px; font-size:14px; }
+  .card p{ margin:0; opacity:0.85; font-size:12px; line-height:1.35; }
+  .pickbtn{
+    margin-top:10px;
+    width:100%;
+    height:44px;
+    border-radius:14px;
+    border:1px solid rgba(30,255,214,0.45);
+    background:rgba(30,255,214,0.18);
+    color:#fff;
+    font-weight:950;
+    touch-action:none;
+  }
+  .pickbtn:active{ background:rgba(255,107,155,0.25); transform:scale(.99); }
+
+  #startBtn{
+    width:min(360px, 92vw);
+    height:52px;
+    border-radius:18px;
+    border:1px solid rgba(30,255,214,0.55);
+    background:rgba(30,255,214,0.22);
+    color:#fff;
+    font-weight:1000;
+    font-size:16px;
+    letter-spacing:0.6px;
+    touch-action:none;
+  }
+  #startBtn:active{ background:rgba(255,107,155,0.28); transform:scale(.99); }
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
 
-<div id="hud">
+<!-- Character select -->
+<div id="select">
+  <div id="title">BÀ ĐỤT • CHỌN NHÂN VẬT & OUTFIT</div>
+  <div id="subtitle">
+    • Mập quá: không chui lọt cửa hẹp 🧱<br/>
+    • Ốm quá: không mở được cửa cân nặng ⚖️<br/>
+    • Đến WC bấm “WC” để giảm 1% kg 🚽<br/>
+    • 💨 để giảm cực nhẹ – né đồ ăn rơi nếu sợ tăng cân
+  </div>
+
+  <div class="row" id="charRow"></div>
+  <div class="row" id="outfitRow"></div>
+
+  <button id="startBtn">VÀO GAME</button>
+</div>
+
+<!-- HUD -->
+<div id="hud" style="display:none;">
   <div id="left"  class="btn">←</div>
   <div id="right" class="btn">→</div>
   <div id="jump"  class="btn">JUMP</div>
   <div id="fart"  class="btn">💨</div>
+  <div id="poop"  class="btn">WC</div>
   <div id="reset" class="btn">R</div>
 </div>
 
@@ -118,16 +214,16 @@
   resize();
   const W=()=>innerWidth, H=()=>innerHeight;
 
-  /* ================= Audio (WebAudio) ================= */
+  /* ================= Audio ================= */
   let AC=null, audioOn=true, unlocked=false;
-  function ensureAudio(){
-    if(!AC) AC = new (window.AudioContext||window.webkitAudioContext)();
-  }
+  function ensureAudio(){ if(!AC) AC = new (window.AudioContext||window.webkitAudioContext)(); }
   function unlockAudio(){
     if(unlocked) return;
     unlocked=true;
     ensureAudio();
     if(AC.state==="suspended") AC.resume().catch(()=>{});
+    // tiny click to confirm unlock
+    sfx("ui");
   }
   function sfx(type){
     if(!audioOn) return;
@@ -135,53 +231,177 @@
     if(AC.state==="suspended") AC.resume().catch(()=>{});
     const t=AC.currentTime;
 
-    const o=AC.createOscillator();
-    const g=AC.createGain();
-    o.connect(g); g.connect(AC.destination);
+    const mk=(oType, f0, f1, dur, g0)=>{
+      const o=AC.createOscillator();
+      const g=AC.createGain();
+      o.type=oType;
+      o.frequency.setValueAtTime(f0,t);
+      if(f1) o.frequency.exponentialRampToValueAtTime(f1,t+dur*0.7);
+      g.gain.setValueAtTime(g0,t);
+      g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+      o.connect(g); g.connect(AC.destination);
+      o.start(t); o.stop(t+dur);
+    };
 
-    if(type==="jump"){
-      o.type="triangle";
-      o.frequency.setValueAtTime(520,t);
-      o.frequency.exponentialRampToValueAtTime(720,t+0.06);
-      g.gain.setValueAtTime(0.06,t);
-      g.gain.exponentialRampToValueAtTime(0.001,t+0.09);
-      o.start(t); o.stop(t+0.10);
-    }
-    if(type==="eat"){
-      o.type="sine";
-      o.frequency.setValueAtTime(660,t);
-      o.frequency.exponentialRampToValueAtTime(980,t+0.04);
-      g.gain.setValueAtTime(0.045,t);
-      g.gain.exponentialRampToValueAtTime(0.001,t+0.07);
-      o.start(t); o.stop(t+0.08);
-    }
+    if(type==="jump") mk("triangle", 520, 820, 0.10, 0.06);
+    if(type==="eat")  mk("sine",     660, 980, 0.08, 0.05);
+    if(type==="door") mk("square",   180, 120, 0.10, 0.04);
+    if(type==="poop") mk("sawtooth", 140,  70, 0.14, 0.055);
+    if(type==="hit")  mk("sawtooth", 220,  60, 0.16, 0.06);
+    if(type==="ui")   mk("triangle", 700, 900, 0.05, 0.03);
+
     if(type==="fart"){
-      // noise-ish using fast square + filter sweep
-      const o2=AC.createOscillator();
-      const g2=AC.createGain();
+      // low pass sweep "pff"
+      const o=AC.createOscillator();
+      const g=AC.createGain();
       const f=AC.createBiquadFilter();
-      o2.type="square";
-      o2.frequency.setValueAtTime(90,t);
+      o.type="square";
+      o.frequency.setValueAtTime(90,t);
       f.type="lowpass";
       f.frequency.setValueAtTime(520,t);
-      f.frequency.exponentialRampToValueAtTime(110,t+0.12);
-      g2.gain.setValueAtTime(0.035,t);
-      g2.gain.exponentialRampToValueAtTime(0.001,t+0.16);
-      o2.connect(f); f.connect(g2); g2.connect(AC.destination);
-      o2.start(t); o2.stop(t+0.18);
-    }
-    if(type==="hit"){
-      o.type="sawtooth";
-      o.frequency.setValueAtTime(180,t);
-      o.frequency.exponentialRampToValueAtTime(70,t+0.08);
-      g.gain.setValueAtTime(0.06,t);
-      g.gain.exponentialRampToValueAtTime(0.001,t+0.12);
-      o.start(t); o.stop(t+0.13);
+      f.frequency.exponentialRampToValueAtTime(110,t+0.14);
+      g.gain.setValueAtTime(0.04,t);
+      g.gain.exponentialRampToValueAtTime(0.001,t+0.18);
+      o.connect(f); f.connect(g); g.connect(AC.destination);
+      o.start(t); o.stop(t+0.19);
     }
   }
 
-  /* ================= Input ================= */
-  const V = {l:false,r:false,j:false,f:false, reset:false};
+  /* ================= UI: character/outfit select ================= */
+  const selectEl = document.getElementById("select");
+  const hudEl = document.getElementById("hud");
+  const charRow = document.getElementById("charRow");
+  const outfitRow = document.getElementById("outfitRow");
+  const startBtn = document.getElementById("startBtn");
+
+  const CHARACTERS = [
+    { id:"badut",  name:"Bà Đụt",  base:"#ffe0c2", hair:"#2b1a3b", vibe:"Cười hiền • Má hồng" },
+    { id:"banu",   name:"Bà Nụ",   base:"#ffe7d6", hair:"#0b0f1f", vibe:"Mắt long lanh • Dịu dàng" },
+    { id:"bapop",  name:"Bà Pốp",  base:"#ffe0cc", hair:"#3b1342", vibe:"Năng lượng • Lém lỉnh" },
+  ];
+  const OUTFITS = [
+    { id:"none",  name:"Basic",  desc:"Áo trơn" },
+    { id:"hat",   name:"Mũ cute",desc:"Mũ tai bèo" },
+    { id:"dress", name:"Váy",    desc:"Váy pastel" },
+    { id:"bag",   name:"Túi",    desc:"Túi xinh" },
+  ];
+
+  let pickedChar = CHARACTERS[0].id;
+  let pickedOutfit = OUTFITS[0].id;
+
+  function renderPickers(){
+    charRow.innerHTML="";
+    for(const c of CHARACTERS){
+      const div=document.createElement("div");
+      div.className="card"+(pickedChar===c.id?" active":"");
+      div.innerHTML = `
+        <canvas width="140" height="86" style="width:100%;height:auto;border-radius:14px;background:rgba(0,0,0,0.20);border:1px solid rgba(255,255,255,0.12)"></canvas>
+        <h3>${c.name}</h3>
+        <p>${c.vibe}</p>
+        <button class="pickbtn">CHỌN</button>
+      `;
+      div.querySelector(".pickbtn").addEventListener("click",(e)=>{
+        e.preventDefault(); unlockAudio(); sfx("ui");
+        pickedChar=c.id; renderPickers();
+      });
+      const cv=div.querySelector("canvas");
+      drawAvatarPreview(cv.getContext("2d"), c, pickedOutfit);
+      charRow.appendChild(div);
+    }
+
+    outfitRow.innerHTML="";
+    for(const o of OUTFITS){
+      const div=document.createElement("div");
+      div.className="card"+(pickedOutfit===o.id?" active":"");
+      div.innerHTML=`
+        <h3>${o.name}</h3>
+        <p>${o.desc}</p>
+        <button class="pickbtn">CHỌN OUTFIT</button>
+      `;
+      div.querySelector(".pickbtn").addEventListener("click",(e)=>{
+        e.preventDefault(); unlockAudio(); sfx("ui");
+        pickedOutfit=o.id; renderPickers();
+      });
+      outfitRow.appendChild(div);
+    }
+  }
+
+  function drawAvatarPreview(g, c, outfitId){
+    g.clearRect(0,0,140,86);
+    // bg glow
+    const grd=g.createLinearGradient(0,0,0,86);
+    grd.addColorStop(0,"rgba(30,255,214,0.22)");
+    grd.addColorStop(1,"rgba(255,107,155,0.18)");
+    g.fillStyle=grd; g.fillRect(0,0,140,86);
+
+    // simple cute face
+    const r=26, cx=52, cy=44;
+    // hair
+    g.fillStyle=c.hair;
+    roundRect(g, cx-r*1.1, cy-r*1.25, r*2.2, r*0.8, 10); g.fill();
+    // face
+    g.fillStyle=c.base;
+    g.beginPath(); g.arc(cx,cy,r,0,Math.PI*2); g.fill();
+    // cheeks
+    g.fillStyle="rgba(255,107,155,0.35)";
+    g.beginPath(); g.arc(cx-r*0.45, cy+r*0.10, r*0.18, 0, Math.PI*2); g.fill();
+    g.beginPath(); g.arc(cx+r*0.45, cy+r*0.10, r*0.18, 0, Math.PI*2); g.fill();
+    // eyes
+    g.fillStyle="#0b0f1f";
+    g.beginPath(); g.arc(cx-r*0.26, cy-r*0.10, r*0.11, 0, Math.PI*2); g.fill();
+    g.beginPath(); g.arc(cx+r*0.26, cy-r*0.10, r*0.11, 0, Math.PI*2); g.fill();
+    g.fillStyle="rgba(255,255,255,0.9)";
+    g.beginPath(); g.arc(cx-r*0.22, cy-r*0.15, r*0.04, 0, Math.PI*2); g.fill();
+    g.beginPath(); g.arc(cx+r*0.22, cy-r*0.15, r*0.04, 0, Math.PI*2); g.fill();
+    // mouth
+    g.strokeStyle="#7a3f2b";
+    g.lineWidth=3;
+    g.beginPath(); g.arc(cx, cy+r*0.18, r*0.18, 0, Math.PI); g.stroke();
+
+    // outfit icon
+    g.save();
+    g.translate(98, 40);
+    g.fillStyle="rgba(0,0,0,0.22)";
+    roundRect(g, -26,-22, 52,44, 12); g.fill();
+    g.fillStyle="rgba(255,255,255,0.88)";
+    g.font="900 12px system-ui";
+    g.fillText(outfitId.toUpperCase(), -22, 4);
+    g.restore();
+
+    // tiny label
+    g.fillStyle="rgba(0,0,0,0.30)";
+    roundRect(g, 8, 8, 124, 20, 10); g.fill();
+    g.fillStyle="#fff";
+    g.font="900 12px system-ui";
+    g.fillText("Tap để unlock sound", 16, 23);
+  }
+
+  function roundRect(g,x,y,w,h,r){
+    r=Math.min(r,w/2,h/2);
+    g.beginPath();
+    g.moveTo(x+r,y);
+    g.arcTo(x+w,y,x+w,y+h,r);
+    g.arcTo(x+w,y+h,x,y+h,r);
+    g.arcTo(x,y+h,x,y,r);
+    g.arcTo(x,y,x+w,y,r);
+    g.closePath();
+  }
+
+  renderPickers();
+
+  startBtn.addEventListener("click",(e)=>{
+    e.preventDefault();
+    unlockAudio(); sfx("ui");
+    // enter play
+    selectEl.style.display="none";
+    hudEl.style.display="block";
+    mode="play";
+    applyPickedAvatar();
+    reset();
+  });
+
+  /* ================= HUD input ================= */
+  const V = {l:false,r:false,j:false,f:false,p:false, reset:false};
   function bindHold(id, key){
     const el=document.getElementById(id);
     const on = (e)=>{ e.preventDefault(); unlockAudio(); V[key]=true; };
@@ -198,6 +418,7 @@
   bindHold("right","r");
   bindHold("jump","j");
   bindHold("fart","f");
+  bindHold("poop","p");
 
   const resetBtn=document.getElementById("reset");
   resetBtn.addEventListener("touchstart",(e)=>{e.preventDefault(); unlockAudio(); V.reset=true;},{passive:false});
@@ -207,6 +428,7 @@
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
   const lerp=(a,b,t)=>a+(b-a)*t;
   const rects=(a,b)=>a.x<b.x+b.w && a.x+a.w>b.x && a.y<b.y+b.h && a.y+a.h>b.y;
+
   function rr(x,y,w,h,r){
     r=Math.min(r,w/2,h/2);
     ctx.beginPath();
@@ -218,7 +440,7 @@
     ctx.closePath();
   }
 
-  /* ================= Art: Food icons ================= */
+  /* ================= Food icons ================= */
   const FOODS = [
     {id:"milk", name:"Trà sữa",  kg:1.5, color:"#ffb3d1"},
     {id:"ice",  name:"Kem",      kg:2.5, color:"#cfe6ff"},
@@ -226,99 +448,84 @@
     {id:"burg", name:"Burger",   kg:6.0, color:"#b9ffcf"},
     {id:"piz",  name:"Pizza",    kg:7.5, color:"#ffc1a1"},
   ];
+
   function drawFoodIcon(type, x,y, s){
-    // x,y: top-left; s: size
     ctx.save();
     ctx.translate(x,y);
     ctx.scale(s/64, s/64);
 
     if(type==="milk"){
-      // cup
-      ctx.fillStyle="#ffe7f1";
-      rr(18,14,28,40,10); ctx.fill();
-      // tea
-      ctx.fillStyle="#c07b55";
-      rr(20,28,24,24,8); ctx.fill();
-      // straw
-      ctx.strokeStyle="#18ffd6";
-      ctx.lineWidth=5;
+      ctx.fillStyle="#ffe7f1"; rr(18,14,28,40,10); ctx.fill();
+      ctx.fillStyle="#c07b55"; rr(20,28,24,24,8); ctx.fill();
+      ctx.strokeStyle="#18ffd6"; ctx.lineWidth=5;
       ctx.beginPath(); ctx.moveTo(36,6); ctx.lineTo(36,26); ctx.stroke();
-      // pearls
       ctx.fillStyle="#2b1a3b";
       for(let i=0;i<5;i++){ ctx.beginPath(); ctx.arc(24+i*8,52,3.6,0,Math.PI*2); ctx.fill(); }
     } else if(type==="ice"){
-      // cone
       ctx.fillStyle="#d5a56b";
       ctx.beginPath(); ctx.moveTo(32,58); ctx.lineTo(16,26); ctx.lineTo(48,26); ctx.closePath(); ctx.fill();
-      // scoop
       ctx.fillStyle="#cfe6ff";
       ctx.beginPath(); ctx.arc(32,24,16,0,Math.PI*2); ctx.fill();
       ctx.fillStyle="#ff6b9b";
       ctx.beginPath(); ctx.arc(24,18,6,0,Math.PI*2); ctx.fill();
     } else if(type==="nug"){
-      ctx.fillStyle="#ffd28a";
-      rr(16,20,34,26,12); ctx.fill();
-      ctx.fillStyle="rgba(0,0,0,0.12)";
-      rr(18,22,30,22,10); ctx.fill();
-      // sesame-ish dots
+      ctx.fillStyle="#ffd28a"; rr(16,20,34,26,12); ctx.fill();
+      ctx.fillStyle="rgba(0,0,0,0.12)"; rr(18,22,30,22,10); ctx.fill();
       ctx.fillStyle="rgba(0,0,0,0.12)";
       for(const p of [[22,26],[34,30],[40,38],[26,40]]){
         ctx.beginPath(); ctx.arc(p[0],p[1],2.2,0,Math.PI*2); ctx.fill();
       }
     } else if(type==="burg"){
-      // bun top
-      ctx.fillStyle="#f7c97f";
-      rr(14,18,36,18,12); ctx.fill();
-      // lettuce
-      ctx.fillStyle="#4dffb6";
-      rr(16,34,32,6,6); ctx.fill();
-      // patty
-      ctx.fillStyle="#7a3f2b";
-      rr(16,40,32,10,6); ctx.fill();
-      // bun bottom
-      ctx.fillStyle="#f0b86b";
-      rr(14,50,36,10,8); ctx.fill();
-      // seeds
+      ctx.fillStyle="#f7c97f"; rr(14,18,36,18,12); ctx.fill();
+      ctx.fillStyle="#4dffb6"; rr(16,34,32,6,6); ctx.fill();
+      ctx.fillStyle="#7a3f2b"; rr(16,40,32,10,6); ctx.fill();
+      ctx.fillStyle="#f0b86b"; rr(14,50,36,10,8); ctx.fill();
       ctx.fillStyle="rgba(255,255,255,0.5)";
       for(const p of [[22,22],[28,20],[36,22],[42,24]]){
         ctx.beginPath(); ctx.ellipse(p[0],p[1],3,1.6,0,0,Math.PI*2); ctx.fill();
       }
     } else if(type==="piz"){
-      // slice
       ctx.fillStyle="#ffd28a";
       ctx.beginPath(); ctx.moveTo(16,16); ctx.lineTo(52,30); ctx.lineTo(22,54); ctx.closePath(); ctx.fill();
-      // cheese
       ctx.fillStyle="#ffdf6b";
       ctx.beginPath(); ctx.moveTo(20,20); ctx.lineTo(46,30); ctx.lineTo(24,48); ctx.closePath(); ctx.fill();
-      // pepperoni
       ctx.fillStyle="#ff6b9b";
       for(const p of [[30,30],[36,36],[28,42]]){
         ctx.beginPath(); ctx.arc(p[0],p[1],4.4,0,Math.PI*2); ctx.fill();
       }
-      // crust
-      ctx.strokeStyle="#f0b86b";
-      ctx.lineWidth=6;
+      ctx.strokeStyle="#f0b86b"; ctx.lineWidth=6;
       ctx.beginPath(); ctx.moveTo(16,16); ctx.lineTo(52,30); ctx.stroke();
     }
 
     ctx.restore();
   }
 
-  /* ================= World / Level ================= */
+  /* ================= World: level with narrow gaps + weight doors + WC =================
+     Symbols:
+     # solid
+     . empty
+     o food static
+     S start
+     F finish
+     N narrow gate (must be thin enough: radius <= gateR)
+     D weight door (must be heavy enough: kg >= req)
+     T toilet (WC)
+  */
   const TILE=48;
+
   const level = [
-"############################################################################################################################",
-"#.............................................o............o..................o..............o.............................#",
-"#.................o......................o.........................o..................o...............................F....#",
-"#..S....######..............######..................######..................######..................######...................#",
-"#.....................o........................o.....................o.....................o...............................#",
-"#..........#####################..................#####################..................#####################..............#",
-"#.............................................o............o..................o..............o.............................#",
-"#..................o..............o..................o..................o..................o..............o................#",
-"############################################################################################################################"
+"###############################################################################################################################",
+"#..S....o.............o..............T...................o.............N..................o......................D......F.....#",
+"#.............###########....####################....###########....###########....####################....###########........#",
+"#.............#.........#....#..................#....#.........#....#.........#....#..................#....#.........#........#",
+"#....o........#....o....#....#....o.............#....#....o....#....#....o....#....#....o.............#....#....o....#........#",
+"#####..########....######....#....###########...#....######....#....######....#....#...###########....#....######....##########",
+"#.........................o..#.............o....#............o.#............o.#....#....o.............#.......................#",
+"#..T.........................####################....####################....####################....####################....T.#",
+"###############################################################################################################################"
   ];
 
-  const blocks=[], foodsStatic=[];
+  const blocks=[], foodsStatic=[], narrows=[], doors=[], toilets=[];
   let start={x:80,y:80}, finish={x:0,y:0,w:TILE,h:TILE};
   const worldW = level[0].length * TILE;
   const worldH = level.length * TILE;
@@ -330,8 +537,17 @@
       const px=x*TILE, py=y*TILE;
       if(ch==="#") blocks.push({x:px,y:py,w:TILE,h:TILE});
       if(ch==="o"){
-        const def = FOODS[Math.floor(Math.random()*FOODS.length)];
-        foodsStatic.push({x:px+10,y:py+10,w:28,h:28,alive:true, def});
+        const def=FOODS[Math.floor(Math.random()*FOODS.length)];
+        foodsStatic.push({x:px+10,y:py+10,w:30,h:30,alive:true,def});
+      }
+      if(ch==="N"){
+        narrows.push({x:px+8,y:py+2,w:TILE-16,h:TILE-4, gateR:22}); // mập quá không lọt (radius > 22)
+      }
+      if(ch==="D"){
+        doors.push({x:px+6,y:py+2,w:TILE-12,h:TILE-4, reqKg:72, open:false}); // ốm quá không mở
+      }
+      if(ch==="T"){
+        toilets.push({x:px+6,y:py+6,w:TILE-12,h:TILE-12});
       }
       if(ch==="S") start={x:px+12,y:py-8};
       if(ch==="F") finish={x:px+12,y:py-8,w:TILE,h:TILE};
@@ -342,106 +558,97 @@
   const particles=[], popups=[];
   function spawnSparkle(x,y,count=10){
     for(let i=0;i<count;i++){
-      particles.push({
-        x,y,
-        vx:(Math.random()*2-1)*220,
-        vy:(Math.random()*2-1)*220-120,
-        life:0.35+Math.random()*0.25,
-        t:0,
-        kind:"spark"
-      });
+      particles.push({x,y,vx:(Math.random()*2-1)*220,vy:(Math.random()*2-1)*220-120,life:0.4+Math.random()*0.2,t:0,kind:"spark"});
     }
-    if(particles.length>250) particles.splice(0, particles.length-250);
+    if(particles.length>260) particles.splice(0,particles.length-260);
   }
   function spawnFart(x,y,dir){
-    for(let i=0;i<16;i++){
-      particles.push({
-        x,y,
-        vx:dir*(120+Math.random()*180) + (Math.random()*2-1)*50,
-        vy:(Math.random()*2-1)*70 - 20,
-        life:0.45+Math.random()*0.20,
-        t:0,
-        kind:"smoke"
-      });
+    for(let i=0;i<18;i++){
+      particles.push({x,y,vx:dir*(150+Math.random()*200) + (Math.random()*2-1)*60,vy:(Math.random()*2-1)*90-20,life:0.5+Math.random()*0.2,t:0,kind:"smoke"});
     }
-    if(particles.length>250) particles.splice(0, particles.length-250);
+    if(particles.length>260) particles.splice(0,particles.length-260);
   }
   function popup(text,x,y){
     popups.push({text,x,y,vy:-40,life:0.9,t:0});
     if(popups.length>30) popups.shift();
   }
 
-  /* ================= Falling foods (from sky) ================= */
+  /* ================= Falling foods ================= */
   const falling=[]; let fallTimer=0;
   function spawnFalling(camX, camY){
     const def = FOODS[Math.floor(Math.random()*FOODS.length)];
     const x = camX + 60 + Math.random()*(W()-120);
-    const y = camY - 140 - Math.random()*200;
-    falling.push({
-      x,y, vx:(Math.random()*2-1)*60, vy:100+Math.random()*140,
-      rot:Math.random()*Math.PI, vr:(Math.random()*2-1)*2.6,
-      size:26+Math.random()*10,
-      def
-    });
-    if(falling.length>80) falling.splice(0, falling.length-80);
+    const y = camY - 140 - Math.random()*240;
+    falling.push({x,y,vx:(Math.random()*2-1)*60,vy:110+Math.random()*140,rot:Math.random()*Math.PI,vr:(Math.random()*2-1)*2.6,size:26+Math.random()*10,def});
+    if(falling.length>90) falling.splice(0, falling.length-90);
   }
 
-  /* ================= Player + Physics ================= */
+  /* ================= Player physics ================= */
   const GRAV=2450;
   const MOVE=980;
   const MAXS=340;
-
   const KG_MIN=40, KG_MAX=130;
+
   const player={
     x:start.x,y:start.y,vx:0,vy:0,
-    kg:55, onGround:false,
+    kg:55,onGround:false,
     jumps:2,
     fartCD:0,
+    poopCD:0,
     dead:false,
     score:0,
     facing:1,
     runT:0,
-    blinkT:0
+    blinkT:0,
+    skin: { base:"#ffe0c2", hair:"#2b1a3b", name:"Bà Đụt" },
+    outfit:"none"
   };
-  const cam={x:0,y:0};
 
-  function kgT(){
-    return clamp((player.kg-50)/(125-50), 0, 1);
+  const cam={x:0,y:0};
+  let mode="select";
+
+  function applyPickedAvatar(){
+    const c = CHARACTERS.find(x=>x.id===pickedChar) || CHARACTERS[0];
+    player.skin = { base:c.base, hair:c.hair, name:c.name };
+    player.outfit = pickedOutfit;
   }
-  function radius(){
-    const t=kgT();
-    return 18 + t*18; // 18..36
-  }
-  function jumpPower(){
-    const t=kgT();
-    return 820 - t*320;
-  }
+
+  function kgT(){ return clamp((player.kg-50)/(125-50),0,1); }
+  function radius(){ const t=kgT(); return 18 + t*18; }              // càng mập càng to
+  function jumpPower(){ const t=kgT(); return 820 - t*320; }         // càng mập nhảy yếu
   function reset(){
     player.x=start.x; player.y=start.y;
     player.vx=0; player.vy=0;
     player.kg=55; player.jumps=2;
     player.onGround=false;
-    player.fartCD=0;
+    player.fartCD=0; player.poopCD=0;
     player.dead=false;
     player.score=0;
     player.facing=1;
     for(const f of foodsStatic) f.alive=true;
     falling.length=0; particles.length=0; popups.length=0;
+    for(const d of doors) d.open=false;
+    popup(`Xin chào ${player.skin.name}!`, player.x, player.y-20);
   }
 
-  /* ================= Collisions ================= */
+  function nearToilet(pr){
+    for(const t of toilets){
+      const near = rects(pr, {x:t.x-18,y:t.y-18,w:t.w+36,h:t.h+36});
+      if(near) return t;
+    }
+    return null;
+  }
+
   function step(dt){
+    if(mode!=="play") return;
     if(player.dead) return;
 
     // spawn falling foods
     fallTimer += dt;
-    const rate = 1.1; // foods/second
-    while(fallTimer > 1/rate){
-      fallTimer -= 1/rate;
-      spawnFalling(cam.x, cam.y);
-    }
+    const rate = 1.15;
+    while(fallTimer > 1/rate){ fallTimer -= 1/rate; spawnFalling(cam.x, cam.y); }
 
-    // particles update
+    // update particles/popups
     for(let i=particles.length-1;i>=0;i--){
       const p=particles[i];
       p.t += dt;
@@ -450,8 +657,6 @@
       p.vy += 420*dt;
       if(p.t >= p.life) particles.splice(i,1);
     }
-
-    // popups update
     for(let i=popups.length-1;i>=0;i--){
       const p=popups[i];
       p.t += dt;
@@ -466,12 +671,13 @@
       f.x += f.vx*dt;
       f.y += f.vy*dt;
       f.rot += f.vr*dt;
-      if(f.y > cam.y + H() + 260) falling.splice(i,1);
+      if(f.y > cam.y + H() + 300) falling.splice(i,1);
     }
 
     player.fartCD = Math.max(0, player.fartCD - dt);
+    player.poopCD = Math.max(0, player.poopCD - dt);
 
-    // move input
+    // input
     let ax=0;
     if(V.l) ax -= MOVE;
     if(V.r) ax += MOVE;
@@ -481,12 +687,12 @@
     if(!V.l && !V.r) player.vx *= Math.pow(0.82, 60*dt);
     player.vx = clamp(player.vx, -MAXS, MAXS);
 
-    // run animation time
+    // run anim time
     const moving = Math.abs(player.vx) > 20;
     if(moving && player.onGround) player.runT += dt*(1.6 + Math.abs(player.vx)/MAXS);
     else player.runT *= 0.96;
 
-    // jump (edge)
+    // jump edge
     step.prevJ = step.prevJ ?? false;
     if(V.j && !step.prevJ && player.jumps>0){
       player.vy = -jumpPower();
@@ -495,14 +701,18 @@
     }
     step.prevJ = V.j;
 
-    // fart
+    // fart (tiny reduce) + smoke from behind
     if(V.f && player.fartCD<=0){
-      const before = player.kg;
-      player.kg = Math.max(KG_MIN, player.kg * 0.999); // giảm nhẹ
+      const before=player.kg;
+      player.kg = Math.max(KG_MIN, player.kg * 0.999);
       player.fartCD = 0.12;
       if(before - player.kg > 0){
-        spawnFart(player.x + radius() + (player.facing<0?-10:10), player.y + radius()*1.35, -player.facing);
-        popup("-kg", player.x+radius(), player.y-10);
+        // from behind: opposite facing
+        const r=radius();
+        const fx = player.x + r + (player.facing>0 ? -r*0.95 : r*0.95);
+        const fy = player.y + r*1.15;
+        spawnFart(fx, fy, -player.facing);
+        popup("-kg", player.x+r-10, player.y-10);
         sfx("fart");
       }
     }
@@ -510,13 +720,24 @@
     // gravity
     player.vy += GRAV*dt;
 
-    // collider rect based on circle
     const r = radius();
     let pr = {x:player.x, y:player.y, w:r*2, h:r*2};
 
-    // move X
+    // update doors open state (weight)
+    for(const d of doors){
+      const near = rects(pr, {x:d.x-16,y:d.y-16,w:d.w+32,h:d.h+32});
+      d.open = near && player.kg >= d.reqKg;
+      if(near && !d.open){
+        // hint if too thin
+        // (rate limit by cooldown in UI; we keep it subtle)
+      }
+    }
+
+    // X move
     player.x += player.vx*dt;
     pr.x = player.x;
+
+    // collide solids
     for(const b of blocks){
       if(!rects(pr,b)) continue;
       if(player.vx>0) player.x = b.x - pr.w;
@@ -525,10 +746,36 @@
       pr.x = player.x;
     }
 
-    // move Y
+    // collide narrows (if too fat -> block)
+    for(const n of narrows){
+      if(!rects(pr,n)) continue;
+      if(r > n.gateR){
+        // block like solid
+        if(player.vx>0) player.x = n.x - pr.w;
+        else if(player.vx<0) player.x = n.x + n.w;
+        player.vx=0;
+        pr.x=player.x;
+        popup("MẬP QUÁ KHÔNG CHUI LỌT!", n.x-20, n.y-10);
+        sfx("hit");
+      }
+    }
+
+    // collide doors (if closed -> solid)
+    for(const d of doors){
+      if(d.open) continue;
+      if(!rects(pr,d)) continue;
+      if(player.vx>0) player.x = d.x - pr.w;
+      else if(player.vx<0) player.x = d.x + d.w;
+      player.vx=0;
+      pr.x=player.x;
+      popup(`ỐM QUÁ! CẦN ≥ ${d.reqKg}KG`, d.x-30, d.y-10);
+    }
+
+    // Y move
     player.y += player.vy*dt;
     pr.y = player.y;
     player.onGround=false;
+
     for(const b of blocks){
       if(!rects(pr,b)) continue;
       if(player.vy>0){
@@ -543,7 +790,7 @@
       pr.y=player.y;
     }
 
-    // eat static foods
+    // foods static
     for(const f of foodsStatic){
       if(!f.alive) continue;
       if(rects(pr,f)){
@@ -555,8 +802,7 @@
         sfx("eat");
       }
     }
-
-    // eat falling foods
+    // foods falling
     for(let i=falling.length-1;i>=0;i--){
       const f=falling[i];
       const hit = rects(pr, {x:f.x, y:f.y, w:f.size, h:f.size});
@@ -570,8 +816,23 @@
       }
     }
 
-    // death by falling
-    if(player.y > worldH + 260){
+    // poop at toilet: reduce 1% kg
+    const toilet = nearToilet(pr);
+    if(toilet && V.p && player.poopCD<=0){
+      const before = player.kg;
+      player.kg = Math.max(KG_MIN, player.kg * 0.99);
+      player.poopCD = 0.6;
+      spawnSparkle(toilet.x + toilet.w/2, toilet.y + toilet.h/2, 14);
+      popup(`-1% (${(before-player.kg).toFixed(2)}kg)`, toilet.x-10, toilet.y-12);
+      sfx("poop");
+    }
+    if(!toilet && V.p){
+      // hint
+      popup("TÌM WC ĐÃ!", player.x + r - 10, player.y - 18);
+    }
+
+    // death by fall
+    if(player.y > worldH + 280){
       player.dead=true;
       sfx("hit");
     }
@@ -579,22 +840,21 @@
     // finish
     if(rects(pr, finish)){
       popup("VỀ ĐÍCH! 🎉", player.x, player.y-30);
-      // loop lại cho vui
+      sfx("door");
       reset();
     }
   }
 
-  /* ================= Background art: City Food Cartoon ================= */
+  /* ================= Background: food city + truck + signs ================= */
   function drawBG(t){
     // sky
     const g=ctx.createLinearGradient(0,0,0,H());
     g.addColorStop(0,"#18ffd6");
     g.addColorStop(0.55,"#4b3cff");
     g.addColorStop(1,"#ff6b9b");
-    ctx.fillStyle=g;
-    ctx.fillRect(0,0,W(),H());
+    ctx.fillStyle=g; ctx.fillRect(0,0,W(),H());
 
-    // moving clouds (parallax)
+    // clouds
     const cloudY = H()*0.18;
     for(let i=0;i<6;i++){
       const x = (i*260 - (t*22)% (W()+260));
@@ -611,24 +871,25 @@
     }
     ctx.restore();
 
-    // skyline mid
+    // skyline mid + neon signs
     ctx.save();
-    ctx.globalAlpha=0.26;
+    ctx.globalAlpha=0.28;
     ctx.translate(- (cam.x*0.30)%520, 0);
     for(let i=0;i<10;i++){
       const x=i*190;
       drawBuilding(x, H()*0.50, 150, 210 + (i%4)*40, "#120a2a");
-      // neon signs blink
       drawNeonSign(x+24, H()*0.50 + 40, 80, 26, (Math.sin(t*3+i)*0.5+0.5));
     }
     ctx.restore();
 
-    // street / ground gradient overlay
+    // food truck (cute)
+    drawFoodTruck((t*60)%(W()+180)-180, H()*0.72);
+
+    // street shade
     const gg=ctx.createLinearGradient(0,H()*0.62,0,H());
     gg.addColorStop(0,"rgba(0,0,0,0)");
     gg.addColorStop(1,"rgba(0,0,0,0.28)");
-    ctx.fillStyle=gg;
-    ctx.fillRect(0,H()*0.60,W(),H()*0.40);
+    ctx.fillStyle=gg; ctx.fillRect(0,H()*0.60,W(),H()*0.40);
   }
 
   function drawCloud(x,y,scale){
@@ -648,13 +909,10 @@
   function drawBuilding(x, baseY, w, h, color){
     ctx.fillStyle=color;
     rr(x, baseY, w, h, 18); ctx.fill();
-    // windows
-    ctx.globalAlpha*=0.9;
     ctx.fillStyle="rgba(24,255,214,0.18)";
     for(let r=0;r<6;r++){
       for(let c=0;c<3;c++){
-        const wx=x+18+c*30;
-        const wy=baseY+22+r*26;
+        const wx=x+18+c*30, wy=baseY+22+r*26;
         rr(wx,wy,16,14,4); ctx.fill();
       }
     }
@@ -671,7 +929,36 @@
     ctx.restore();
   }
 
-  /* ================= Draw World ================= */
+  function drawFoodTruck(x,y){
+    ctx.save();
+    ctx.translate(x,y);
+    ctx.globalAlpha=0.9;
+
+    // body
+    ctx.fillStyle="rgba(30,255,214,0.22)";
+    rr(0,0,150,60,16); ctx.fill();
+    ctx.fillStyle="rgba(255,107,155,0.20)";
+    rr(8,8,134,44,14); ctx.fill();
+
+    // window + sign
+    ctx.fillStyle="rgba(0,0,0,0.22)";
+    rr(18,16,64,22,10); ctx.fill();
+    ctx.fillStyle="rgba(255,255,255,0.85)";
+    ctx.font="900 12px system-ui";
+    ctx.fillText("BÀ ĐỤT", 26, 32);
+
+    // wheels
+    ctx.fillStyle="#0b0f1f";
+    ctx.beginPath(); ctx.arc(38,60,14,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(118,60,14,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle="rgba(255,255,255,0.3)";
+    ctx.beginPath(); ctx.arc(38,60,6,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(118,60,6,0,Math.PI*2); ctx.fill();
+
+    ctx.restore();
+  }
+
+  /* ================= Draw world ================= */
   function drawWorld(t){
     // camera follow
     cam.x = clamp(player.x - W()*0.45, 0, Math.max(0, worldW - W()));
@@ -684,13 +971,49 @@
     ctx.fillStyle="rgba(10,12,30,0.68)";
     for(const b of blocks) ctx.fillRect(b.x,b.y,b.w,b.h);
 
-    // static foods
+    // toilets
+    for(const tt of toilets){
+      ctx.fillStyle="rgba(30,255,214,0.18)";
+      rr(tt.x,tt.y,tt.w,tt.h,14); ctx.fill();
+      ctx.fillStyle="rgba(255,255,255,0.85)";
+      ctx.font="950 12px system-ui";
+      ctx.fillText("WC", tt.x+10, tt.y+22);
+      // icon
+      ctx.fillStyle="rgba(0,0,0,0.25)";
+      rr(tt.x+tt.w-28, tt.y+10, 18, 18, 6); ctx.fill();
+    }
+
+    // narrow gate
+    for(const n of narrows){
+      ctx.fillStyle="rgba(255,107,155,0.22)";
+      rr(n.x,n.y,n.w,n.h,14); ctx.fill();
+      ctx.strokeStyle="rgba(255,255,255,0.18)";
+      ctx.lineWidth=2;
+      rr(n.x+3,n.y+3,n.w-6,n.h-6,12); ctx.stroke();
+      ctx.fillStyle="rgba(255,255,255,0.85)";
+      ctx.font="900 11px system-ui";
+      ctx.fillText("HẸP", n.x+8, n.y+22);
+    }
+
+    // weight doors
+    for(const d of doors){
+      if(d.open){
+        ctx.fillStyle="rgba(30,255,214,0.12)";
+      } else {
+        ctx.fillStyle="rgba(30,255,214,0.26)";
+      }
+      rr(d.x,d.y,d.w,d.h,14); ctx.fill();
+      ctx.fillStyle="rgba(255,255,255,0.88)";
+      ctx.font="950 11px system-ui";
+      ctx.fillText(d.open ? "MỞ" : `≥${d.reqKg}KG`, d.x+10, d.y+22);
+    }
+
+    // foods static
     for(const f of foodsStatic){
       if(!f.alive) continue;
       drawFoodIcon(f.def.id, f.x, f.y, 34);
-      // kg label tiny
       ctx.fillStyle="rgba(0,0,0,0.35)";
-      rr(f.x, f.y-14, 44, 14, 6); ctx.fill();
+      rr(f.x, f.y-14, 46, 14, 6); ctx.fill();
       ctx.fillStyle="#fff";
       ctx.font="800 11px system-ui";
       ctx.fillText(`${f.def.kg}kg`, f.x+6, f.y-3);
@@ -705,20 +1028,20 @@
       ctx.restore();
     }
 
-    // finish gate
+    // finish
     ctx.fillStyle="rgba(30,255,214,0.22)";
     rr(finish.x, finish.y, finish.w, finish.h, 16); ctx.fill();
     ctx.fillStyle="rgba(255,107,155,0.25)";
     rr(finish.x+10, finish.y+10, finish.w-20, finish.h-20, 14); ctx.fill();
 
-    // player (cute)
+    // player
     drawBadut(t);
 
     // particles
     for(const p of particles){
       const k = 1 - p.t/p.life;
       if(p.kind==="spark"){
-        ctx.globalAlpha = 0.7*k;
+        ctx.globalAlpha = 0.75*k;
         ctx.fillStyle = "rgba(255,255,255,0.9)";
         ctx.fillRect(p.x, p.y, 3, 3);
         ctx.fillStyle = "rgba(30,255,214,0.8)";
@@ -736,7 +1059,7 @@
       const k=1-pp.t/pp.life;
       ctx.globalAlpha = 0.9*k;
       ctx.fillStyle="#fff";
-      ctx.font="900 14px system-ui";
+      ctx.font="950 14px system-ui";
       ctx.fillText(pp.text, pp.x, pp.y);
       ctx.globalAlpha = 1;
     }
@@ -748,13 +1071,11 @@
     const r = radius();
     const prX = player.x, prY = player.y;
 
-    // bounce when running
     const runBounce = player.onGround ? Math.sin(player.runT*10)*3 : 0;
     const squish = player.onGround ? (Math.abs(player.vx)>40 ? 0.06 : 0.02) : 0.00;
     const sx = 1 + squish;
     const sy = 1 - squish;
 
-    // body (round)
     ctx.save();
     ctx.translate(prX + r, prY + r + runBounce);
     ctx.scale(sx, sy);
@@ -767,31 +1088,52 @@
     ctx.fill();
     ctx.globalAlpha=1;
 
-    // main body
-    ctx.fillStyle="#ffe0c2";
+    // outfit base
+    if(player.outfit==="dress"){
+      ctx.fillStyle="rgba(255,107,155,0.22)";
+      rr(-r*0.85, r*0.18, r*1.70, r*0.75, r*0.22); ctx.fill();
+    }
+    if(player.outfit==="bag"){
+      ctx.fillStyle="rgba(30,255,214,0.22)";
+      rr(r*0.55, r*0.10, r*0.45, r*0.52, r*0.18); ctx.fill();
+      ctx.strokeStyle="rgba(255,255,255,0.30)";
+      ctx.lineWidth=Math.max(2, r*0.06);
+      ctx.beginPath();
+      ctx.arc(r*0.78, r*0.10, r*0.22, Math.PI, 0);
+      ctx.stroke();
+    }
+
+    // face
+    ctx.fillStyle=player.skin.base;
     ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fill();
+
+    // hair bangs
+    ctx.fillStyle=player.skin.hair;
+    rr(-r*0.70, -r*0.95, r*1.40, r*0.48, r*0.22); ctx.fill();
+    ctx.fillStyle="rgba(255,255,255,0.18)";
+    rr(-r*0.35, -r*0.85, r*0.35, r*0.18, r*0.10); ctx.fill();
+
+    // hat
+    if(player.outfit==="hat"){
+      ctx.fillStyle="rgba(30,255,214,0.25)";
+      rr(-r*0.75, -r*1.22, r*1.50, r*0.36, r*0.18); ctx.fill();
+      ctx.fillStyle="rgba(255,107,155,0.22)";
+      rr(-r*0.45, -r*1.38, r*0.90, r*0.28, r*0.16); ctx.fill();
+    }
 
     // cheeks
     ctx.fillStyle="rgba(255,107,155,0.35)";
     ctx.beginPath(); ctx.arc(-r*0.42, r*0.15, r*0.16, 0, Math.PI*2); ctx.fill();
     ctx.beginPath(); ctx.arc( r*0.42, r*0.15, r*0.16, 0, Math.PI*2); ctx.fill();
 
-    // hair bangs
-    ctx.fillStyle="#2b1a3b";
-    rr(-r*0.70, -r*0.95, r*1.40, r*0.48, r*0.22); ctx.fill();
-    // tiny hair shine
-    ctx.fillStyle="rgba(255,255,255,0.18)";
-    rr(-r*0.35, -r*0.85, r*0.35, r*0.18, r*0.10); ctx.fill();
-
-    // eyes (blink sometimes)
+    // blink
     player.blinkT -= 1/60;
     if(player.blinkT<=0 && Math.random()<0.01) player.blinkT = 0.12;
-
     const blink = player.blinkT>0;
-    ctx.strokeStyle="#0b0f1f";
-    ctx.lineWidth=Math.max(2, r*0.10);
 
     if(blink){
+      ctx.strokeStyle="#0b0f1f";
+      ctx.lineWidth=Math.max(2, r*0.10);
       ctx.beginPath();
       ctx.moveTo(-r*0.35, -r*0.10); ctx.lineTo(-r*0.18, -r*0.10);
       ctx.moveTo( r*0.18, -r*0.10); ctx.lineTo( r*0.35, -r*0.10);
@@ -800,7 +1142,6 @@
       ctx.fillStyle="#0b0f1f";
       ctx.beginPath(); ctx.arc(-r*0.26, -r*0.12, r*0.10, 0, Math.PI*2); ctx.fill();
       ctx.beginPath(); ctx.arc( r*0.26, -r*0.12, r*0.10, 0, Math.PI*2); ctx.fill();
-      // eye sparkle
       ctx.fillStyle="rgba(255,255,255,0.9)";
       ctx.beginPath(); ctx.arc(-r*0.22, -r*0.17, r*0.04, 0, Math.PI*2); ctx.fill();
       ctx.beginPath(); ctx.arc( r*0.22, -r*0.17, r*0.04, 0, Math.PI*2); ctx.fill();
@@ -813,7 +1154,7 @@
     ctx.arc(0, r*0.18, r*0.18, 0, Math.PI);
     ctx.stroke();
 
-    // mini arms (wiggle)
+    // arms wiggle
     const arm = Math.sin(t*8 + player.runT*6)*0.08;
     ctx.strokeStyle="#ffcfb1";
     ctx.lineWidth=Math.max(3, r*0.12);
@@ -823,48 +1164,39 @@
     ctx.stroke();
 
     ctx.restore();
-
-    // tiny direction indicator (optional cute)
-    ctx.save();
-    ctx.globalAlpha=0.16;
-    ctx.fillStyle = player.facing>0 ? "rgba(30,255,214,0.8)" : "rgba(255,107,155,0.8)";
-    rr(prX + r - 18, prY - 22, 36, 14, 8); ctx.fill();
-    ctx.globalAlpha=1;
-    ctx.restore();
   }
 
-  /* ================= HUD ================= */
   function drawHUD(){
-    // top bar
+    // top panel
     ctx.fillStyle="rgba(24,255,214,0.14)";
-    rr(12, 12, 270, 56, 16); ctx.fill();
+    rr(12, 12, 310, 60, 16); ctx.fill();
     ctx.strokeStyle="rgba(255,107,155,0.28)";
     ctx.lineWidth=2;
-    rr(14, 14, 266, 52, 15); ctx.stroke();
+    rr(14, 14, 306, 56, 15); ctx.stroke();
 
     ctx.fillStyle="#ffffff";
-    ctx.font="950 14px system-ui";
-    ctx.fillText(`KG: ${player.kg.toFixed(2)}   SCORE: ${player.score}`, 26, 38);
+    ctx.font="1000 14px system-ui";
+    ctx.fillText(`${player.skin.name} • KG: ${player.kg.toFixed(2)} • SCORE: ${player.score}`, 26, 38);
 
-    // hint
-    ctx.font="800 12px system-ui";
-    ctx.fillStyle="rgba(255,255,255,0.85)";
-    ctx.fillText(`💨 giảm kg chút xíu • Né đồ ăn rơi nếu sợ tăng kg`, 26, 56);
+    ctx.font="850 12px system-ui";
+    ctx.fillStyle="rgba(255,255,255,0.88)";
+    ctx.fillText("WC: đứng gần 🚽 rồi bấm WC để -1% kg", 26, 58);
 
     if(player.dead){
       ctx.fillStyle="rgba(0,0,0,0.45)";
       ctx.fillRect(0,0,W(),H());
       ctx.fillStyle="#fff";
       ctx.font="1000 26px system-ui";
-      ctx.fillText("BÀ ĐỤT XỈU 😵", 22, 130);
+      ctx.fillText("BỊ RƠI 😵", 22, 130);
       ctx.font="900 16px system-ui";
       ctx.fillText("Bấm R để chơi lại", 22, 160);
     }
   }
 
-  /* ================= Main loop ================= */
+  /* ================= Main Loop ================= */
   let last=0, acc=0;
   const FIXED=1/120, MAXF=1/20;
+
   function loop(ts){
     if(!last) last=ts;
     let frame=(ts-last)/1000;
@@ -873,6 +1205,7 @@
 
     if(V.reset){
       V.reset=false;
+      sfx("ui");
       reset();
     }
 
@@ -885,9 +1218,10 @@
     const t = ts/1000;
     ctx.clearRect(0,0,W(),H());
     drawBG(t);
-    drawWorld(t);
-    drawHUD();
-
+    if(mode==="play"){
+      drawWorld(t);
+      drawHUD();
+    }
     requestAnimationFrame(loop);
   }
   requestAnimationFrame(loop);
