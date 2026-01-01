@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport"
       content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,viewport-fit=cover"/>
-<title>BÀ ĐỤT – Final (Auto Start + Ranking)</title>
+<title>BÀ ĐỤT – Final FIX (No Out-of-World)</title>
 <style>
   html,body{
     margin:0;height:100%;
@@ -23,7 +23,6 @@
     touch-action:none;
     background:linear-gradient(180deg,#0a2a3b 0%, #1a0f2f 55%, #1a0f2f 100%);
   }
-
   :root{
     --safeT: env(safe-area-inset-top);
     --safeR: env(safe-area-inset-right);
@@ -136,7 +135,6 @@
 <body>
 <canvas id="c"></canvas>
 
-<!-- HUD -->
 <div id="hud" style="display:none;">
   <div id="left"  class="btn">←</div>
   <div id="right" class="btn">→</div>
@@ -146,7 +144,6 @@
   <div id="reset" class="btn">R</div>
 </div>
 
-<!-- End -->
 <div id="end">
   <div id="endCard">
     <div id="endTitle">Kết quả</div>
@@ -163,7 +160,7 @@
 
 <script>
 (() => {
-  /* ================= iOS ANTI-ZOOM / NO SCROLL ================= */
+  /* ===== iOS: chống zoom/scroll ===== */
   ["gesturestart","gesturechange","gestureend"].forEach(evt=>{
     document.addEventListener(evt, e=>e.preventDefault(), {passive:false});
   });
@@ -178,7 +175,7 @@
     lastTap=now;
   }, {passive:false});
 
-  /* ================= Canvas ================= */
+  /* ===== Canvas ===== */
   const canvas = document.getElementById("c");
   const ctx = canvas.getContext("2d", {alpha:false});
   function resize(){
@@ -191,7 +188,7 @@
   resize();
   const W=()=>innerWidth, H=()=>innerHeight;
 
-  /* ================= Audio (simple sfx) ================= */
+  /* ===== Audio SFX đơn giản ===== */
   let AC=null, audioOn=true, unlocked=false;
   function ensureAudio(){ if(!AC) AC = new (window.AudioContext||window.webkitAudioContext)(); }
   function unlockAudio(){
@@ -239,7 +236,7 @@
     }
   }
 
-  /* ================= Helpers ================= */
+  /* ===== Helpers ===== */
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
   const rects=(a,b)=>a.x<b.x+b.w && a.x+a.w>b.x && a.y<b.y+b.h && a.y+a.h>b.y;
   function rr(x,y,w,h,r){
@@ -253,7 +250,7 @@
     ctx.closePath();
   }
 
-  /* ================= UI Buttons ================= */
+  /* ===== UI Buttons ===== */
   const hudEl = document.getElementById("hud");
   const V = {l:false,r:false,j:false,f:false,p:false, reset:false};
   function bindHold(id, key){
@@ -278,7 +275,7 @@
   resetBtn.addEventListener("touchstart",(e)=>{e.preventDefault(); unlockAudio(); V.reset=true;},{passive:false});
   resetBtn.addEventListener("pointerdown",(e)=>{e.preventDefault(); unlockAudio(); V.reset=true;},{passive:false});
 
-  /* ================= Ranking ================= */
+  /* ===== Ranking ===== */
   const endEl = document.getElementById("end");
   const endTitle = document.getElementById("endTitle");
   const endInfo = document.getElementById("endInfo");
@@ -287,8 +284,8 @@
   const againBtn = document.getElementById("againBtn");
   const clearBtn = document.getElementById("clearBtn");
 
-  const LS_KEY="badut_ranking_final";
-  const BEST_KEY="badut_best_final";
+  const LS_KEY="badut_ranking_fixed_v1";
+  const BEST_KEY="badut_best_fixed_v1";
 
   function loadRanking(){
     try{ return JSON.parse(localStorage.getItem(LS_KEY) || "[]"); }
@@ -317,7 +314,7 @@
         rankList.appendChild(line);
       });
     }
-    bestLine.textContent = `High Score (mọi lượt chơi): ${Math.floor(getBest())} pts`;
+    bestLine.textContent = `High Score (mọi lượt): ${Math.floor(getBest())} pts`;
   }
   function showEnd(type, reason=""){
     endEl.style.display="flex";
@@ -338,7 +335,7 @@
   clearBtn.addEventListener("click",(e)=>{ e.preventDefault(); unlockAudio(); sfx("ui"); saveRanking([]); setBest(0); renderRanking(); });
   clearBtn.addEventListener("touchstart",(e)=>{ e.preventDefault(); unlockAudio(); sfx("ui"); saveRanking([]); setBest(0); renderRanking(); }, {passive:false});
 
-  /* ================= Food definitions ================= */
+  /* ===== Food definitions ===== */
   const FOODS = [
     {id:"milk", name:"Trà sữa",  kg:1.5},
     {id:"ice",  name:"Kem",      kg:2.5},
@@ -397,22 +394,30 @@
     ctx.restore();
   }
 
-  /* ================= World ================= */
+  /* ===== World (thiết kế lại tránh ngõ cụt + spawn chắc chắn trong map) ===== */
   const TILE=48;
 
-  // N: narrow gate (fat can't pass)
-  // D: weight door (thin can't open)
-  // T: toilet
+  // Ký tự:
+  // # block
+  // . empty
+  // o food static
+  // N narrow gate (mập quá không chui)
+  // D door cần đủ kg mới mở
+  // T toilet
+  // S start
+  // F finish
+
+  // LƯU Ý: dòng dưới S luôn là # (để không rơi / không bay lên trên)
   const level = [
-"###############################################################################################################################",
-"#..S....o.............o..............T...................o.............N..................o......................D......F.....#",
-"#.............###########....####################....###########....###########....####################....###########........#",
-"#.............#.........#....#..................#....#.........#....#.........#....#..................#....#.........#........#",
-"#....o........#....o....#....#....o.............#....#....o....#....#....o....#....#....o.............#....#....o....#........#",
-"#####..########....######....#....###########...#....######....#....######....#....#...###########....#....######....##########",
-"#.........................o..#.............o....#............o.#............o.#....#....o.............#.......................#",
-"#..T.........................####################....####################....####################....####################....T.#",
-"###############################################################################################################################"
+"############################################################################################################################",
+"#........................................o....................T.......................o...............D...................F#",
+"#...............###########........####################....###########....####################....###########...............#",
+"#...............#.........#........#..................#....#.........#....#..................#....#.........#...............#",
+"#....S..........#....o....#..o.....#....o.............#....#....o....#....#....o.............#....#....o....#......N........#",
+"#####..##########....######..#######....###########...######....######....#...###########....#....######....##############..#",
+"#.........................o..#.............o...........o..........................o..........#.........................T....#",
+"#..T.........................####################....####################....####################....####################....#",
+"############################################################################################################################"
   ];
 
   const blocks=[], foodsStatic=[], narrows=[], doors=[], toilets=[];
@@ -439,12 +444,14 @@
       if(ch==="T"){
         toilets.push({x:px+6,y:py+6,w:TILE-12,h:TILE-12});
       }
-      if(ch==="S") start={x:px+12,y:py-8};
-      if(ch==="F") finish={x:px+12,y:py-8,w:TILE,h:TILE};
+
+      // ===== FIX CHÍNH: S/F KHÔNG BAO GIỜ DÙNG py-8 (ÂM Y) =====
+      if(ch==="S") start={x:px+12, y:py+6};
+      if(ch==="F") finish={x:px+12,y:py+6,w:TILE,h:TILE};
     }
   }
 
-  /* ================= FX ================= */
+  /* ===== FX ===== */
   const particles=[], popups=[];
   function spawnSparkle(x,y,count=10){
     for(let i=0;i<count;i++){
@@ -463,7 +470,7 @@
     if(popups.length>30) popups.shift();
   }
 
-  /* ================= Falling foods (for dodge score) ================= */
+  /* ===== Falling foods (né để + điểm) ===== */
   const falling=[]; let fallTimer=0;
   function spawnFalling(camX, camY){
     const def = FOODS[Math.floor(Math.random()*FOODS.length)];
@@ -479,13 +486,13 @@
     if(falling.length>120) falling.splice(0, falling.length-120);
   }
 
-  /* ================= Player ================= */
+  /* ===== Player ===== */
   const GRAV=2450;
   const MOVE=980;
   const MAXS=340;
   const KG_MIN=40, KG_MAX=130;
   const LOSE_KG=130;
-  const TARGET_KG=60; // thắng nếu đến đích mà <= 60kg
+  const TARGET_KG=60;
 
   const player={
     x:start.x,y:start.y,vx:0,vy:0,
@@ -502,7 +509,7 @@
     ateDuringAir:false
   };
   const cam={x:0,y:0};
-  let mode="play"; // AUTO PLAY
+  let mode="play";
 
   function kgT(){ return clamp((player.kg-50)/(125-50),0,1); }
   function radius(){ const t=kgT(); return 18 + t*18; }
@@ -521,6 +528,11 @@
     for(const f of foodsStatic) f.alive=true;
     falling.length=0; particles.length=0; popups.length=0;
     for(const d of doors) d.open=false;
+
+    // ===== FIX CHỐT: không bao giờ spawn ra khỏi map =====
+    player.x = clamp(player.x, 0, worldW-60);
+    player.y = clamp(player.y, 0, worldH-60);
+
     popup(`BÀ ĐỤT XUẤT PHÁT!`, player.x, player.y-20);
   }
 
@@ -539,13 +551,11 @@
     if(player.score > getBest()) setBest(player.score);
     showEnd("lose", reason);
   }
-
   function win(){
     if(mode!=="play") return;
     mode="end";
     sfx("door");
     if(player.score > getBest()) setBest(player.score);
-    // chỉ thắng mới vào ranking
     pushRanking({ name: player.skin.name, score: player.score, ts: Date.now() });
     showEnd("win");
   }
@@ -553,15 +563,12 @@
   function step(dt){
     if(mode!=="play") return;
 
-    // time score
     player.score += dt * 2.0;
 
-    // spawn falling foods
     fallTimer += dt;
     const rate = 1.25;
     while(fallTimer > 1/rate){ fallTimer -= 1/rate; spawnFalling(cam.x, cam.y); }
 
-    // update particles/popups
     for(let i=particles.length-1;i>=0;i--){
       const p=particles[i];
       p.t += dt;
@@ -577,7 +584,6 @@
       if(p.t >= p.life) popups.splice(i,1);
     }
 
-    // falling foods + dodge score
     for(let i=falling.length-1;i>=0;i--){
       const f=falling[i];
       f.vy += 520*dt;
@@ -604,7 +610,6 @@
     player.fartCD = Math.max(0, player.fartCD - dt);
     player.poopCD = Math.max(0, player.poopCD - dt);
 
-    // input
     let ax=0;
     if(V.l) ax -= MOVE;
     if(V.r) ax += MOVE;
@@ -618,7 +623,6 @@
     if(moving && player.onGround) player.runT += dt*(1.6 + Math.abs(player.vx)/MAXS);
     else player.runT *= 0.96;
 
-    // jump edge + clean jump scoring
     step.prevJ = step.prevJ ?? false;
     if(V.j && !step.prevJ && player.jumps>0){
       player.vy = -jumpPower();
@@ -629,7 +633,6 @@
     }
     step.prevJ = V.j;
 
-    // fart (tiny reduce)
     if(V.f && player.fartCD<=0){
       const before=player.kg;
       player.kg = Math.max(KG_MIN, player.kg * 0.999);
@@ -643,13 +646,11 @@
       }
     }
 
-    // gravity
     player.vy += GRAV*dt;
 
     const r = radius();
     let pr = {x:player.x, y:player.y, w:r*2, h:r*2};
 
-    // doors open state
     for(const d of doors){
       const near = rects(pr, {x:d.x-16,y:d.y-16,w:d.w+32,h:d.h+32});
       d.open = near && player.kg >= d.reqKg;
@@ -713,7 +714,7 @@
       player.inAir=false;
     }
 
-    // eat static foods
+    // eat static
     for(const f of foodsStatic){
       if(!f.alive) continue;
       if(rects(pr,f)){
@@ -726,12 +727,11 @@
       }
     }
 
-    // eat falling foods
+    // eat falling
     for(let i=falling.length-1;i>=0;i--){
       const f=falling[i];
       const hit = rects(pr, {x:f.x, y:f.y, w:f.size, h:f.size});
       if(hit){
-        f.eaten=true;
         player.kg = Math.min(KG_MAX, player.kg + f.def.kg);
         spawnSparkle(f.x+f.size/2, f.y+f.size/2, 10);
         popup(`+${f.def.kg}kg`, f.x, f.y-8);
@@ -741,7 +741,7 @@
       }
     }
 
-    // toilet poop: -1% kg
+    // toilet
     const toilet = nearToilet(pr);
     if(toilet && V.p && player.poopCD<=0){
       const before = player.kg;
@@ -755,18 +755,22 @@
       popup("TÌM WC ĐÃ!", player.x + r - 10, player.y - 18);
     }
 
-    // lose: overweight
+    // ===== FIX CHỐT: KHÔNG BAO GIỜ OUT KHỎI WORLD =====
+    player.x = clamp(player.x, 0, worldW - r*2);
+    player.y = clamp(player.y, 0, worldH - r*2);
+
+    // lose conditions
     if(player.kg > LOSE_KG){
       lose("VƯỢT 130KG");
       return;
     }
-    // lose: fall
     if(player.y > worldH + 280){
       lose("RƠI KHỎI MAP");
       return;
     }
-    // win: reach finish AND under target kg
-    if(rects(pr, finish)){
+
+    // win check
+    if(rects({x:player.x,y:player.y,w:r*2,h:r*2}, finish)){
       if(player.kg <= TARGET_KG){
         win();
       }else{
@@ -776,7 +780,7 @@
     }
   }
 
-  /* ================= Background (cartoon city) ================= */
+  /* ===== Background (cartoon city) ===== */
   function drawBG(t){
     const g=ctx.createLinearGradient(0,0,0,H());
     g.addColorStop(0,"#18ffd6");
@@ -784,7 +788,6 @@
     g.addColorStop(1,"#ff6b9b");
     ctx.fillStyle=g; ctx.fillRect(0,0,W(),H());
 
-    // far skyline
     ctx.save();
     ctx.globalAlpha=0.20;
     ctx.translate(- (cam.x*0.18)%420, 0);
@@ -794,7 +797,6 @@
     }
     ctx.restore();
 
-    // mid skyline + neon signs
     ctx.save();
     ctx.globalAlpha=0.30;
     ctx.translate(- (cam.x*0.32)%520, 0);
@@ -802,16 +804,6 @@
       const x=i*190;
       drawBuilding(x, H()*0.50, 150, 210 + (i%4)*40, "#120a2a");
       drawNeonSign(x+24, H()*0.50 + 40, 80, 26, (Math.sin(t*3+i)*0.5+0.5));
-    }
-    ctx.restore();
-
-    // floating bubbles
-    ctx.save();
-    ctx.globalAlpha=0.12;
-    for(let i=0;i<10;i++){
-      const bx = (i*180 + (Math.sin(t*0.8+i)*90) + (cam.x*0.1)) % (W()+200) - 100;
-      const by = 80 + i*42 + (Math.cos(t*0.7+i)*18);
-      ctx.beginPath(); ctx.arc(bx, by, 22, 0, Math.PI*2); ctx.fillStyle="#fff"; ctx.fill();
     }
     ctx.restore();
   }
@@ -837,19 +829,22 @@
     ctx.restore();
   }
 
-  /* ================= Draw world ================= */
+  /* ===== Draw world ===== */
   function drawWorld(t){
-    cam.x = clamp(player.x - W()*0.45, 0, Math.max(0, worldW - W()));
-    cam.y = clamp(player.y - H()*0.55, 0, Math.max(0, worldH - H()));
+    // ===== FIX CHÍNH: Camera bám theo TÂM nhân vật =====
+    const r = radius();
+    const cx = player.x + r;
+    const cy = player.y + r;
+
+    cam.x = clamp(cx - W()*0.45, 0, Math.max(0, worldW - W()));
+    cam.y = clamp(cy - H()*0.55, 0, Math.max(0, worldH - H()));
 
     ctx.save();
     ctx.translate(-cam.x, -cam.y);
 
-    // blocks
     ctx.fillStyle="rgba(10,12,30,0.68)";
     for(const b of blocks) ctx.fillRect(b.x,b.y,b.w,b.h);
 
-    // toilets
     for(const tt of toilets){
       ctx.fillStyle="rgba(30,255,214,0.18)";
       rr(tt.x,tt.y,tt.w,tt.h,14); ctx.fill();
@@ -858,7 +853,6 @@
       ctx.fillText("WC", tt.x+10, tt.y+22);
     }
 
-    // narrow
     for(const n of narrows){
       ctx.fillStyle="rgba(255,107,155,0.22)";
       rr(n.x,n.y,n.w,n.h,14); ctx.fill();
@@ -867,7 +861,6 @@
       ctx.fillText("HẸP", n.x+8, n.y+22);
     }
 
-    // doors
     for(const d of doors){
       ctx.fillStyle = d.open ? "rgba(30,255,214,0.14)" : "rgba(30,255,214,0.28)";
       rr(d.x,d.y,d.w,d.h,14); ctx.fill();
@@ -876,7 +869,6 @@
       ctx.fillText(d.open ? "MỞ" : `≥${d.reqKg}KG`, d.x+10, d.y+22);
     }
 
-    // static foods
     for(const f of foodsStatic){
       if(!f.alive) continue;
       drawFoodIcon(f.def.id, f.x, f.y, 34);
@@ -887,7 +879,6 @@
       ctx.fillText(`${f.def.kg}kg`, f.x+6, f.y-3);
     }
 
-    // falling foods
     for(const f of falling){
       ctx.save();
       ctx.translate(f.x+f.size/2, f.y+f.size/2);
@@ -902,10 +893,8 @@
     ctx.fillStyle="rgba(255,107,155,0.25)";
     rr(finish.x+10, finish.y+10, finish.w-20, finish.h-20, 14); ctx.fill();
 
-    // player
     drawPlayer(t);
 
-    // particles
     for(const p of particles){
       const k = 1 - p.t/p.life;
       if(p.kind==="spark"){
@@ -922,7 +911,6 @@
       ctx.globalAlpha = 1;
     }
 
-    // popups
     for(const pp of popups){
       const k=1-pp.t/pp.life;
       ctx.globalAlpha = 0.9*k;
@@ -946,7 +934,6 @@
     ctx.translate(player.x + r, player.y + r + runBounce);
     ctx.scale(sx, sy);
 
-    // shadow
     ctx.globalAlpha=0.22;
     ctx.fillStyle="#000";
     ctx.beginPath();
@@ -954,22 +941,18 @@
     ctx.fill();
     ctx.globalAlpha=1;
 
-    // face
     ctx.fillStyle=player.skin.base;
     ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fill();
 
-    // hair
     ctx.fillStyle=player.skin.hair;
     rr(-r*0.70, -r*0.95, r*1.40, r*0.48, r*0.22); ctx.fill();
     ctx.fillStyle="rgba(255,255,255,0.18)";
     rr(-r*0.35, -r*0.85, r*0.35, r*0.18, r*0.10); ctx.fill();
 
-    // cheeks
     ctx.fillStyle="rgba(255,107,155,0.35)";
     ctx.beginPath(); ctx.arc(-r*0.42, r*0.15, r*0.16, 0, Math.PI*2); ctx.fill();
     ctx.beginPath(); ctx.arc( r*0.42, r*0.15, r*0.16, 0, Math.PI*2); ctx.fill();
 
-    // blink
     player.blinkT -= 1/60;
     if(player.blinkT<=0 && Math.random()<0.01) player.blinkT = 0.12;
     const blink = player.blinkT>0;
@@ -990,7 +973,6 @@
       ctx.beginPath(); ctx.arc( r*0.22, -r*0.17, r*0.04, 0, Math.PI*2); ctx.fill();
     }
 
-    // mouth
     ctx.strokeStyle="#7a3f2b";
     ctx.lineWidth=Math.max(2, r*0.08);
     ctx.beginPath();
@@ -1016,7 +998,7 @@
     ctx.fillText(`Né đồ rơi + clean jump lấy điểm • Thắng khi ≤${TARGET_KG}kg • >${LOSE_KG}kg thua`, 26, 58);
   }
 
-  /* ================= Game loop ================= */
+  /* ===== Loop ===== */
   let last=0, acc=0;
   const FIXED=1/120, MAXF=1/20;
 
@@ -1050,7 +1032,7 @@
     requestAnimationFrame(loop);
   }
 
-  /* ================= AUTO START (FIX TRẮNG MÀN HÌNH) ================= */
+  /* ===== AUTO START ===== */
   hudEl.style.display="block";
   mode="play";
   reset();
