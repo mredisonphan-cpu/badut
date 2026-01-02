@@ -1,10 +1,10 @@
-de<!doctype html>
+<!doctype html>
 <html lang="vi">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport"
       content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,viewport-fit=cover"/>
-<title>BÀ ĐỤT – Upgrade v3 (Cute Intro + Casino Exit + Toilet Icon Only + Audio FIX)</title>
+<title>BÀ ĐỤT – Upgrade v4 (Welcome + Tutorial + Compact UI + KG Ring + Fix Position + Cute Bow)</title>
 <style>
   html,body{
     margin:0;height:100%;
@@ -29,69 +29,90 @@ de<!doctype html>
     --safeB: env(safe-area-inset-bottom);
     --safeL: env(safe-area-inset-left);
   }
-  #hud{ position:fixed; inset:0; pointer-events:none; touch-action:none; }
+
+  /* HUD */
+  #hud{ position:fixed; inset:0; pointer-events:none; touch-action:none; display:none; }
   .btn{
     position:absolute;
     pointer-events:auto;
     display:grid; place-items:center;
-    font-weight:950; color:#fff;
+    font-weight:1000; color:#fff;
     border-radius:18px;
-    background:rgba(30,255,214,0.18);
-    border:1px solid rgba(30,255,214,0.45);
-    border-bottom:2px solid rgba(255,107,155,0.35);
+    background:rgba(30,255,214,0.16);
+    border:1px solid rgba(30,255,214,0.42);
+    border-bottom:2px solid rgba(255,107,155,0.30);
     backdrop-filter:blur(10px) saturate(140%);
     -webkit-backdrop-filter:blur(10px) saturate(140%);
     box-shadow:0 10px 28px rgba(0,0,0,.22);
     touch-action:none;
+    user-select:none;
   }
-  .btn:active{ background:rgba(255,107,155,0.25); transform:scale(.97); }
+  .btn:active{ background:rgba(255,107,155,0.22); transform:scale(.98); }
 
+  /* Compact controls */
+  #pad{
+    position:absolute;
+    left:calc(14px + var(--safeL));
+    bottom:calc(14px + var(--safeB));
+    width:168px; height:86px;
+    pointer-events:none;
+  }
   #left,#right{
-    width:72px;height:72px;
-    bottom:calc(16px + var(--safeB));
-    font-size:26px;
+    width:80px;height:80px;
+    bottom:0;
+    font-size:24px;
+    border-radius:22px;
   }
-  #left { left:calc(16px + var(--safeL)); }
-  #right{ left:calc(102px + var(--safeL)); }
+  #left { left:0; }
+  #right{ left:88px; }
 
+  #actions{
+    position:absolute;
+    right:calc(14px + var(--safeR));
+    bottom:calc(14px + var(--safeB));
+    width:214px; height:164px;
+    pointer-events:none;
+  }
   #jump{
     width:96px;height:96px;
-    bottom:calc(16px + var(--safeB));
-    right:calc(16px + var(--safeR));
-    font-size:15px;
-    letter-spacing:0.5px;
+    right:0; bottom:0;
+    font-size:14px;
+    letter-spacing:0.4px;
+    border-radius:26px;
   }
   #fart{
-    width:110px;height:70px;
-    bottom:calc(124px + var(--safeB));
-    right:calc(16px + var(--safeR));
-    font-size:15px;
+    width:104px;height:70px;
+    right:110px; bottom:0;
+    font-size:14px;
+    border-radius:22px;
   }
   #poop{
-    width:110px;height:70px;
-    bottom:calc(202px + var(--safeB));
-    right:calc(16px + var(--safeR));
-    font-size:15px;
+    width:104px;height:70px;
+    right:110px; bottom:82px;
+    font-size:14px;
+    border-radius:22px;
   }
+  #poop svg{ width:26px; height:26px; }
   #reset{
-    width:60px;height:44px;
+    width:56px;height:42px;
     top:calc(12px + var(--safeT));
     right:calc(12px + var(--safeR));
     font-size:14px;
     border-radius:14px;
+    opacity:0.95;
   }
 
-  /* Intro overlay (cute) */
-  #intro{
+  /* Overlays */
+  .overlay{
     position:fixed; inset:0;
     display:flex;
     justify-content:center;
     align-items:center;
     padding:calc(14px + var(--safeT)) calc(14px + var(--safeR)) calc(14px + var(--safeB)) calc(14px + var(--safeL));
-    background:radial-gradient(1200px 700px at 50% 30%, rgba(30,255,214,0.24), rgba(0,0,0,0.78) 58%);
+    background:radial-gradient(1200px 700px at 50% 30%, rgba(30,255,214,0.20), rgba(0,0,0,0.80) 60%);
     color:#fff;
   }
-  #introCard{
+  .card{
     width:min(680px, 96vw);
     border-radius:22px;
     padding:16px 14px;
@@ -101,23 +122,21 @@ de<!doctype html>
     backdrop-filter:blur(12px) saturate(150%);
     -webkit-backdrop-filter:blur(12px) saturate(150%);
   }
-  #introTop{
-    display:flex; align-items:center; gap:12px; margin-bottom:10px;
-  }
-  #mascot{
-    width:62px; height:62px; border-radius:20px;
-    background:linear-gradient(135deg, rgba(255,107,155,0.26), rgba(30,255,214,0.20));
+  .topRow{ display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+  .mascot{
+    width:64px; height:64px; border-radius:20px;
+    background:linear-gradient(135deg, rgba(255,107,155,0.24), rgba(30,255,214,0.18));
     border:1px solid rgba(255,255,255,0.14);
     box-shadow:0 12px 26px rgba(0,0,0,0.25);
     display:grid; place-items:center;
   }
-  #introTitle{
+  .title{
     font-weight:1000;
     font-size:20px;
     margin:0;
     letter-spacing:0.3px;
   }
-  #introSub{
+  .sub{
     margin:6px 0 12px;
     opacity:0.92;
     font-weight:850;
@@ -133,7 +152,7 @@ de<!doctype html>
     font-weight:900;
     font-size:12px;
   }
-  #tapToStart{
+  .cta{
     margin-top:10px;
     text-align:center;
     font-weight:1000;
@@ -142,8 +161,9 @@ de<!doctype html>
     border-radius:16px;
     border:1px solid rgba(30,255,214,0.60);
     background:rgba(30,255,214,0.20);
+    user-select:none;
   }
-  #tapHint{ opacity:0.85; font-weight:850; font-size:12px; margin-top:8px; text-align:center; }
+  .hint{ opacity:0.85; font-weight:850; font-size:12px; margin-top:8px; text-align:center; }
 
   /* End overlay */
   #end{
@@ -195,21 +215,35 @@ de<!doctype html>
 <body>
 <canvas id="c"></canvas>
 
-<div id="hud" style="display:none;">
-  <div id="left"  class="btn">←</div>
-  <div id="right" class="btn">→</div>
-  <div id="jump"  class="btn">JUMP</div>
-  <div id="fart"  class="btn">Bủm xì</div>
-  <div id="poop"  class="btn">Đi WC</div>
+<div id="hud">
+  <div id="pad">
+    <div id="left"  class="btn">←</div>
+    <div id="right" class="btn">→</div>
+  </div>
+
+  <div id="actions">
+    <div id="poop" class="btn" style="display:flex; flex-direction:column; gap:4px;">
+      <!-- toilet icon only -->
+      <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
+        <path d="M22 14h22c2 0 4 2 4 4v10H18V18c0-2 2-4 4-4z" fill="rgba(255,255,255,0.92)"/>
+        <path d="M18 28h34v14c0 10-8 18-18 18H18V28z" fill="rgba(255,255,255,0.92)"/>
+        <path d="M26 36h18v10c0 4-3 7-7 7h-4c-4 0-7-3-7-7V36z" fill="rgba(10,12,30,0.12)"/>
+      </svg>
+      <div style="font-weight:1000; font-size:12px;">WC</div>
+    </div>
+    <div id="fart" class="btn">Bủm 💨</div>
+    <div id="jump" class="btn">JUMP</div>
+  </div>
+
   <div id="reset" class="btn">R</div>
 </div>
 
-<div id="intro">
-  <div id="introCard">
-    <div id="introTop">
-      <div id="mascot">
-        <!-- Mascot mini-face (canvas-like) -->
-        <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+<!-- Welcome -->
+<div id="welcome" class="overlay">
+  <div class="card">
+    <div class="topRow">
+      <div class="mascot">
+        <svg width="46" height="46" viewBox="0 0 44 44" fill="none">
           <circle cx="22" cy="22" r="18" fill="rgba(255,224,194,0.92)"/>
           <path d="M10 18 C 14 9, 30 9, 34 18" fill="rgba(43,26,59,0.95)"/>
           <circle cx="16.5" cy="21" r="2.6" fill="#0b0f1f"/>
@@ -220,27 +254,50 @@ de<!doctype html>
         </svg>
       </div>
       <div style="flex:1">
-        <div id="introTitle">BÀ ĐỤT – Ăn Vặt & Giảm Cân 🎰✨</div>
-        <div id="introSub">
-          Né đồ ăn rơi để lấy điểm. Muốn thắng phải <b>chạm ĐÍCH</b> khi ≤60kg.<br/>
-          >130kg là thua ngay!
+        <div class="title">BÀ ĐỤT – Ăn Vặt & Giảm Cân 🎰✨</div>
+        <div class="sub">Welcome! Bấm <b>CHƠI</b> để bắt đầu (sẽ bật nhạc & âm thanh).</div>
+      </div>
+    </div>
+
+    <div class="chipRow">
+      <div class="chip">Mục tiêu: chạm ĐÍCH khi ≤ 60kg</div>
+      <div class="chip">>130kg: thua ngay</div>
+      <div class="chip">Né đồ ăn rơi: + điểm & giúp giảm cân</div>
+    </div>
+
+    <div id="btnPlay" class="cta">CHƠI</div>
+    <div class="hint">Tip: Giảm cân → thon hơn → nhảy cao hơn.</div>
+  </div>
+</div>
+
+<!-- Tutorial (inside game) -->
+<div id="tutorial" class="overlay" style="display:none;">
+  <div class="card">
+    <div class="topRow">
+      <div class="mascot">
+        <div style="font-weight:1000; font-size:22px;">📌</div>
+      </div>
+      <div style="flex:1">
+        <div class="title">HƯỚNG DẪN NHANH</div>
+        <div class="sub" style="margin-bottom:0;">
+          Giảm cân để qua màn. Muốn thắng: <b>chạm ĐÍCH khi ≤60kg</b>.
         </div>
       </div>
     </div>
 
     <div class="chipRow">
-      <div class="chip">← / → : Di chuyển</div>
-      <div class="chip">JUMP: Nhảy (2 lần)</div>
-      <div class="chip">Bủm xì: giảm rất nhẹ</div>
-      <div class="chip">Đi WC: giảm 1% (đứng gần bồn cầu)</div>
-      <div class="chip">Né đồ rơi / clean jump: + điểm</div>
+      <div class="chip">1) Né đồ ăn rơi → giúp giảm cân & + điểm</div>
+      <div class="chip">2) Bủm 💨 → giảm cân ít</div>
+      <div class="chip">3) WC → giảm cân nhiều (đứng gần bồn cầu)</div>
+      <div class="chip">Giảm cân → thon gọn hơn → nhảy cao hơn</div>
     </div>
 
-    <div id="tapToStart">Chạm để BẮT ĐẦU (bật nhạc & âm thanh)</div>
-    <div id="tapHint">Tip: Giữ kg vừa đủ để chui cửa / vượt chướng ngại.</div>
+    <div id="btnStart" class="cta">BẮT ĐẦU</div>
+    <div class="hint">Nút điều khiển đã gọn lại dưới màn hình.</div>
   </div>
 </div>
 
+<!-- End -->
 <div id="end">
   <div id="endCard">
     <div id="endTitle">Kết quả</div>
@@ -285,7 +342,7 @@ de<!doctype html>
   resize();
   const W=()=>innerWidth, H=()=>innerHeight;
 
-  /* ===== Audio: FIX iPhone (louder + stable loop) ===== */
+  /* ===== Audio ===== */
   let AC=null, audioOn=true, unlocked=false;
   let bgm=null;
 
@@ -293,7 +350,6 @@ de<!doctype html>
     if(!AC) AC = new (window.AudioContext||window.webkitAudioContext)();
     return AC;
   }
-
   function unlockAudio(){
     if(unlocked) return;
     unlocked=true;
@@ -311,14 +367,13 @@ de<!doctype html>
     const t0 = AC.currentTime;
     const master = AC.createGain();
     master.gain.setValueAtTime(0.0001, t0);
-    master.gain.linearRampToValueAtTime(0.18, t0+0.8); // LOUDER
+    master.gain.linearRampToValueAtTime(0.18, t0+0.8);
     master.connect(AC.destination);
 
     const lp = AC.createBiquadFilter();
     lp.type="lowpass"; lp.frequency.value=1400;
     lp.connect(master);
 
-    // 2 oscillators for simple casino-ish loop
     const lead = AC.createOscillator();
     lead.type="triangle";
     const leadGain = AC.createGain();
@@ -331,7 +386,6 @@ de<!doctype html>
     bassGain.gain.value = 0.0;
     bass.connect(bassGain); bassGain.connect(lp);
 
-    // soft noise hat
     const noiseBuf = AC.createBuffer(1, AC.sampleRate*2, AC.sampleRate);
     const data = noiseBuf.getChannelData(0);
     for(let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*0.20;
@@ -345,9 +399,8 @@ de<!doctype html>
 
     lead.start(t0); bass.start(t0); noise.start(t0);
 
-    // simple cheerful pattern
-    const notes = [392, 440, 523.25, 659.25, 523.25, 440]; // G A C E C A
-    const bassNotes = [98, 110, 130.81, 98]; // G A C G
+    const notes = [392, 440, 523.25, 659.25, 523.25, 440];
+    const bassNotes = [98, 110, 130.81, 98];
     let i=0, bi=0;
 
     function tick(){
@@ -369,7 +422,6 @@ de<!doctype html>
         bassGain.gain.linearRampToValueAtTime(0.0, t+0.30);
       }
 
-      // hat
       noiseGain.gain.cancelScheduledValues(t);
       noiseGain.gain.setValueAtTime(0.0, t);
       noiseGain.gain.linearRampToValueAtTime(0.02, t+0.01);
@@ -479,22 +531,26 @@ de<!doctype html>
   resetBtn.addEventListener("touchstart",(e)=>{e.preventDefault(); unlockAudio(); V.reset=true;},{passive:false});
   resetBtn.addEventListener("pointerdown",(e)=>{e.preventDefault(); unlockAudio(); V.reset=true;},{passive:false});
 
-  /* ===== Intro overlay ===== */
-  const introEl = document.getElementById("intro");
-  function hideIntro(){
-    introEl.style.display="none";
+  /* ===== Welcome + Tutorial flow ===== */
+  const welcomeEl = document.getElementById("welcome");
+  const tutorialEl = document.getElementById("tutorial");
+  const btnPlay = document.getElementById("btnPlay");
+  const btnStart = document.getElementById("btnStart");
+
+  function showTutorial(){
+    welcomeEl.style.display="none";
+    tutorialEl.style.display="flex";
+  }
+  function startGame(){
+    tutorialEl.style.display="none";
     hudEl.style.display="block";
     mode="play";
     reset();
   }
-  function introTap(e){
-    e.preventDefault();
-    unlockAudio();
-    sfx("ui");
-    hideIntro();
-  }
-  introEl.addEventListener("touchstart", introTap, {passive:false});
-  introEl.addEventListener("pointerdown", introTap, {passive:false});
+  btnPlay.addEventListener("touchstart",(e)=>{ e.preventDefault(); unlockAudio(); sfx("ui"); showTutorial(); }, {passive:false});
+  btnPlay.addEventListener("pointerdown",(e)=>{ e.preventDefault(); unlockAudio(); sfx("ui"); showTutorial(); }, {passive:false});
+  btnStart.addEventListener("touchstart",(e)=>{ e.preventDefault(); unlockAudio(); sfx("ui"); startGame(); }, {passive:false});
+  btnStart.addEventListener("pointerdown",(e)=>{ e.preventDefault(); unlockAudio(); sfx("ui"); startGame(); }, {passive:false});
 
   /* ===== Ranking ===== */
   const endEl = document.getElementById("end");
@@ -505,8 +561,8 @@ de<!doctype html>
   const againBtn = document.getElementById("againBtn");
   const clearBtn = document.getElementById("clearBtn");
 
-  const LS_KEY="badut_ranking_v3";
-  const BEST_KEY="badut_best_v3";
+  const LS_KEY="badut_ranking_v4";
+  const BEST_KEY="badut_best_v4";
 
   function loadRanking(){ try{ return JSON.parse(localStorage.getItem(LS_KEY) || "[]"); } catch{ return []; } }
   function saveRanking(arr){ localStorage.setItem(LS_KEY, JSON.stringify(arr)); }
@@ -611,31 +667,26 @@ de<!doctype html>
     ctx.restore();
   }
 
-  /* ===== Toilet icon ONLY (NO WC text) ===== */
+  /* ===== Toilet icon in world ===== */
   function drawToiletIcon(x,y,s, t){
     ctx.save();
     ctx.translate(x,y);
     const w=s, h=s;
 
-    // pulsing glow
     const glow = 0.18 + (Math.sin(t*3.2)*0.5+0.5)*0.18;
     ctx.globalAlpha=glow;
     ctx.fillStyle="rgba(30,255,214,0.9)";
     rr(-5,-5,w+10,h+10,16); ctx.fill();
     ctx.globalAlpha=1;
 
-    // tank
     ctx.fillStyle="rgba(255,255,255,0.92)";
     rr(w*0.18, h*0.08, w*0.52, h*0.26, 10); ctx.fill();
-    // bowl
     rr(w*0.20, h*0.30, w*0.56, h*0.52, 14); ctx.fill();
     ctx.fillStyle="rgba(10,12,30,0.10)";
     rr(w*0.26, h*0.38, w*0.44, h*0.34, 14); ctx.fill();
-    // base
     ctx.fillStyle="rgba(255,255,255,0.86)";
     rr(w*0.28, h*0.76, w*0.40, h*0.16, 12); ctx.fill();
 
-    // tiny sparkle
     ctx.globalAlpha=0.55;
     ctx.fillStyle="rgba(255,107,155,0.9)";
     ctx.beginPath(); ctx.arc(w*0.84, h*0.20, 3.2, 0, Math.PI*2); ctx.fill();
@@ -646,28 +697,24 @@ de<!doctype html>
     ctx.restore();
   }
 
-  /* ===== Casino-style Exit Sign + Arrow (more obvious) ===== */
+  /* ===== Casino-style Exit door ===== */
   function drawCasinoExitDoor(x,y,w,h,t){
     const blink = (Math.sin(t*6.0)*0.5+0.5);
     ctx.save();
     ctx.translate(x,y);
 
-    // big glow background
     ctx.globalAlpha=0.12 + blink*0.18;
     ctx.fillStyle="rgba(255,107,155,0.95)";
     rr(-18,-22,w+36,h+46,22); ctx.fill();
     ctx.globalAlpha=1;
 
-    // marquee sign
     const bw = Math.min(280, w*4.2);
     const bx = w/2 - bw/2;
     const by = -72;
 
-    // sign panel
     ctx.fillStyle="rgba(10,12,30,0.75)";
     rr(bx,by,bw,46,18); ctx.fill();
 
-    // border bulbs
     const bulbs = 18;
     for(let i=0;i<bulbs;i++){
       const px = bx + 14 + i*(bw-28)/(bulbs-1);
@@ -679,14 +726,12 @@ de<!doctype html>
     }
     ctx.globalAlpha=1;
 
-    // text
     ctx.fillStyle="#fff";
     ctx.font="1000 18px system-ui";
     ctx.textAlign="center";
     ctx.fillText("ĐÍCH ĐẾN", bx+bw/2, by+30);
     ctx.textAlign="left";
 
-    // arrow (casino simple)
     const ax = w/2;
     const ay = -18;
     ctx.globalAlpha=0.55 + blink*0.35;
@@ -703,18 +748,15 @@ de<!doctype html>
     ctx.fill();
     ctx.globalAlpha=1;
 
-    // door body
     ctx.fillStyle="rgba(255,255,255,0.12)";
     rr(0,0,w,h,16); ctx.fill();
     ctx.fillStyle="rgba(30,255,214,0.16)";
     rr(8,10,w-16,h-20,14); ctx.fill();
 
-    // inner neon edge
     ctx.strokeStyle=`rgba(30,255,214,${0.35+blink*0.25})`;
     ctx.lineWidth=3;
     rr(6,6,w-12,h-12,14); ctx.stroke();
 
-    // knob
     ctx.fillStyle="rgba(255,107,155,0.9)";
     ctx.beginPath(); ctx.arc(w*0.72, h*0.56, 6, 0, Math.PI*2); ctx.fill();
 
@@ -736,7 +778,6 @@ de<!doctype html>
 "#############################################################################################################################################################################################"
   ];
 
-  // normalize row length
   const maxLen = Math.max(...level.map(r=>r.length));
   for(let i=0;i<level.length;i++){
     if(level[i].length < maxLen) level[i] = level[i] + "#".repeat(maxLen - level[i].length);
@@ -841,7 +882,7 @@ de<!doctype html>
     ateDuringAir:false
   };
   const cam={x:0,y:0};
-  let mode="intro";
+  let mode="welcome"; // welcome -> tutorial -> play -> end
 
   // center message
   const centerMsg = {text:"", t:0, life:0, shake:0};
@@ -857,6 +898,39 @@ de<!doctype html>
   function radius(){ const t=kgT(); return 18 + t*18; }
   function jumpPower(){ const t=kgT(); return 820 - t*320; }
 
+  function safeResolveAfterResize(){
+    // nhẹ nhàng chống kẹt khi thay radius
+    const r=radius();
+    player.x = clamp(player.x, 0, worldW-r*2);
+    player.y = clamp(player.y, 0, worldH-r*2);
+  }
+
+  // FIX: giữ nguyên tâm nhân vật khi KG đổi (đỡ bị “dịch vị trí đứng”)
+  function applyKgDelta(delta){
+    const oldR = radius();
+    const cx = player.x + oldR;
+    const cy = player.y + oldR;
+
+    player.kg = clamp(player.kg + delta, KG_MIN, KG_MAX);
+
+    const newR = radius();
+    player.x = cx - newR;
+    player.y = cy - newR;
+
+    // clamp vào world
+    player.x = clamp(player.x, 0, worldW-newR*2);
+    player.y = clamp(player.y, 0, worldH-newR*2);
+
+    // chống “lụt tường” cơ bản nếu radius tăng chạm block
+    let pr={x:player.x,y:player.y,w:newR*2,h:newR*2};
+    for(const b of blocks){
+      if(!rects(pr,b)) continue;
+      // đẩy lên trên là ưu tiên (thường nhất)
+      player.y = b.y - pr.h - 1;
+      pr.y = player.y;
+    }
+  }
+
   function reset(){
     player.x=start.x; player.y=start.y;
     player.vx=0; player.vy=0;
@@ -871,10 +945,7 @@ de<!doctype html>
     falling.length=0; particles.length=0; popups.length=0; confetti.length=0;
     for(const d of doors) d.open=false;
 
-    const r=radius();
-    player.x = clamp(player.x, 0, worldW-r*2);
-    player.y = clamp(player.y, 0, worldH-r*2);
-
+    safeResolveAfterResize();
     popup("BÀ ĐỤT XUẤT PHÁT!", player.x, player.y-24, true);
   }
 
@@ -951,6 +1022,8 @@ de<!doctype html>
           f.dodged=true;
           player.score += 3;
           popup("+DODGE", fx-16, f.y-10);
+          // “né đồ ăn rơi giúp giảm cân”: giảm nhẹ khi né thành công
+          applyKgDelta(-0.06);
         }
       }
       if(f.y > cam.y + H() + 320){
@@ -987,7 +1060,8 @@ de<!doctype html>
 
     if(V.f && player.fartCD<=0){
       const before=player.kg;
-      player.kg=Math.max(KG_MIN, player.kg*0.999);
+      // bủm xì giảm ít
+      applyKgDelta(-(before*0.001)); // tương đương *0.999 nhưng fix neo tâm
       player.fartCD=0.12;
       if(before-player.kg>0){
         const r=radius();
@@ -1056,7 +1130,7 @@ de<!doctype html>
       if(!f.alive) continue;
       if(rects(pr,f)){
         f.alive=false;
-        player.kg=Math.min(KG_MAX, player.kg + f.def.kg);
+        applyKgDelta(f.def.kg); // FIX neo tâm khi tăng KG
         spawnSparkle(f.x+14,f.y+14,10);
         popup(`+${f.def.kg}kg`, f.x, f.y-8);
         player.ateDuringAir = player.ateDuringAir || !player.onGround;
@@ -1068,7 +1142,7 @@ de<!doctype html>
     for(let i=falling.length-1;i>=0;i--){
       const f=falling[i];
       if(rects(pr,{x:f.x,y:f.y,w:f.size,h:f.size})){
-        player.kg=Math.min(KG_MAX, player.kg + f.def.kg);
+        applyKgDelta(f.def.kg); // FIX neo tâm khi tăng KG
         spawnSparkle(f.x+f.size/2,f.y+f.size/2,10);
         popup(`+${f.def.kg}kg`, f.x, f.y-8);
         player.ateDuringAir = player.ateDuringAir || !player.onGround;
@@ -1081,10 +1155,11 @@ de<!doctype html>
     const toilet=nearToilet(pr);
     if(toilet && V.p && player.poopCD<=0){
       const before=player.kg;
-      player.kg=Math.max(KG_MIN, player.kg*0.99);
+      // WC giảm nhiều (1%)
+      applyKgDelta(-(before*0.01));
       player.poopCD=0.6;
       spawnSparkle(toilet.x+toilet.w/2, toilet.y+toilet.h/2, 14);
-      popup(`-1% (${(before-player.kg).toFixed(2)}kg)`, toilet.x-10, toilet.y-12, true);
+      popup(`-1%`, toilet.x-10, toilet.y-12, true);
       player.score += 2;
       sfx("poop");
     } else if(!toilet && V.p){
@@ -1116,7 +1191,6 @@ de<!doctype html>
     g.addColorStop(1,"#ff6b9b");
     ctx.fillStyle=g; ctx.fillRect(0,0,W(),H());
 
-    // floating neon dots
     ctx.save();
     ctx.globalAlpha=0.18;
     for(let i=0;i<28;i++){
@@ -1127,7 +1201,6 @@ de<!doctype html>
     }
     ctx.restore();
 
-    // parallax silhouettes
     ctx.save();
     ctx.globalAlpha=0.22;
     ctx.translate(- (cam.x*0.18)%420, 0);
@@ -1180,10 +1253,8 @@ de<!doctype html>
     ctx.fillStyle="rgba(10,12,30,0.68)";
     for(const b of blocks) ctx.fillRect(b.x,b.y,b.w,b.h);
 
-    // toilets: icon only
     for(const tt of toilets) drawToiletIcon(tt.x, tt.y, tt.w, t);
 
-    // doors
     for(const d of doors){
       ctx.fillStyle = d.open ? "rgba(30,255,214,0.14)" : "rgba(30,255,214,0.28)";
       rr(d.x,d.y,d.w,d.h,14); ctx.fill();
@@ -1192,7 +1263,6 @@ de<!doctype html>
       ctx.fillText(d.open ? "MỞ" : `≥${d.reqKg}KG`, d.x+10, d.y+24);
     }
 
-    // foods
     for(const f of foodsStatic){
       if(!f.alive) continue;
       drawFoodIcon(f.def.id, f.x, f.y, 34);
@@ -1211,12 +1281,10 @@ de<!doctype html>
       ctx.restore();
     }
 
-    // casino exit door (obvious)
     drawCasinoExitDoor(finish.x, finish.y, finish.w, finish.h, t);
 
     drawPlayer(t);
 
-    // particles
     for(const p of particles){
       const k=1-p.t/p.life;
       if(p.kind==="spark"){
@@ -1233,7 +1301,6 @@ de<!doctype html>
       ctx.globalAlpha=1;
     }
 
-    // popups
     for(const pp of popups){
       const k=1-pp.t/pp.life;
       ctx.globalAlpha=0.92*k;
@@ -1245,7 +1312,6 @@ de<!doctype html>
 
     ctx.restore();
 
-    // center message
     if(centerMsg.life>0){
       const a = 0.92 * Math.max(0, Math.min(1, (centerMsg.life-centerMsg.t)/0.35));
       const shake = centerMsg.shake>0 ? (Math.random()*2-1)*centerMsg.shake : 0;
@@ -1267,16 +1333,47 @@ de<!doctype html>
     }
   }
 
+  /* ===== Player draw (cute + bow + tiny arms + KG ring) ===== */
   function drawPlayer(t){
     const r=radius();
     const runBounce = player.onGround ? Math.sin(player.runT*10)*3 : 0;
     const squish = player.onGround ? (Math.abs(player.vx)>40 ? 0.06 : 0.02) : 0.00;
     const sx=1+squish, sy=1-squish;
 
+    const cx = player.x + r;
+    const cy = player.y + r + runBounce;
+
+    // KG ring (outline) + KG text near character
+    const kgPct = clamp((player.kg - 40) / (130 - 40), 0, 1);
     ctx.save();
-    ctx.translate(player.x+r, player.y+r+runBounce);
+    ctx.translate(cx, cy);
+    ctx.globalAlpha = 0.55;
+    ctx.strokeStyle = "rgba(255,255,255,0.14)";
+    ctx.lineWidth = 6;
+    ctx.beginPath(); ctx.arc(0,0,r+10,0,Math.PI*2); ctx.stroke();
+
+    ctx.globalAlpha = 0.90;
+    ctx.strokeStyle = kgPct < 0.35 ? "rgba(30,255,214,0.95)" : (kgPct < 0.72 ? "rgba(255,255,255,0.92)" : "rgba(255,107,155,0.95)");
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.arc(0,0,r+10,-Math.PI/2, -Math.PI/2 + Math.PI*2*kgPct);
+    ctx.stroke();
+
+    // small kg label next to ring
+    ctx.globalAlpha = 0.95;
+    ctx.fillStyle = "rgba(10,12,30,0.65)";
+    rr(r+14, -14, 74, 28, 12); ctx.fill();
+    ctx.fillStyle="#fff";
+    ctx.font="1000 12px system-ui";
+    ctx.fillText(`${player.kg.toFixed(1)}kg`, r+24, 5);
+    ctx.restore();
+
+    // character
+    ctx.save();
+    ctx.translate(cx, cy);
     ctx.scale(sx, sy);
 
+    // shadow
     ctx.globalAlpha=0.22;
     ctx.fillStyle="#000";
     ctx.beginPath();
@@ -1284,18 +1381,48 @@ de<!doctype html>
     ctx.fill();
     ctx.globalAlpha=1;
 
+    // body base + outline
     ctx.fillStyle=player.skin.base;
     ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle="rgba(255,255,255,0.18)";
+    ctx.lineWidth=Math.max(2, r*0.08);
+    ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.stroke();
 
+    // hair
     ctx.fillStyle=player.skin.hair;
     rr(-r*0.70, -r*0.95, r*1.40, r*0.48, r*0.22); ctx.fill();
     ctx.fillStyle="rgba(255,255,255,0.18)";
     rr(-r*0.35, -r*0.85, r*0.35, r*0.18, r*0.10); ctx.fill();
 
+    // BOW (nơ) trên đầu
+    ctx.save();
+    ctx.translate(0, -r*0.92);
+    ctx.rotate(Math.sin(t*2.0)*0.05);
+    ctx.globalAlpha=0.92;
+    ctx.fillStyle="rgba(255,107,155,0.92)";
+    // left wing
+    ctx.beginPath();
+    ctx.moveTo(-6, 6);
+    ctx.quadraticCurveTo(-28, -2, -18, -16);
+    ctx.quadraticCurveTo(-2, -12, -6, 6);
+    ctx.fill();
+    // right wing
+    ctx.beginPath();
+    ctx.moveTo(6, 6);
+    ctx.quadraticCurveTo(28, -2, 18, -16);
+    ctx.quadraticCurveTo(2, -12, 6, 6);
+    ctx.fill();
+    // knot
+    ctx.fillStyle="rgba(255,255,255,0.35)";
+    rr(-6,-10,12,12,6); ctx.fill();
+    ctx.restore();
+
+    // cheeks
     ctx.fillStyle="rgba(255,107,155,0.35)";
     ctx.beginPath(); ctx.arc(-r*0.42, r*0.15, r*0.16, 0, Math.PI*2); ctx.fill();
     ctx.beginPath(); ctx.arc( r*0.42, r*0.15, r*0.16, 0, Math.PI*2); ctx.fill();
 
+    // blink
     player.blinkT -= 1/60;
     if(player.blinkT<=0 && Math.random()<0.01) player.blinkT=0.12;
     const blink = player.blinkT>0;
@@ -1316,29 +1443,39 @@ de<!doctype html>
       ctx.beginPath(); ctx.arc( r*0.22, -r*0.17, r*0.04, 0, Math.PI*2); ctx.fill();
     }
 
+    // smile
     ctx.strokeStyle="#7a3f2b";
     ctx.lineWidth=Math.max(2, r*0.08);
     ctx.beginPath();
     ctx.arc(0, r*0.18, r*0.18, 0, Math.PI);
     ctx.stroke();
 
+    // tiny arms (2 tay nhỏ xíu thả xuống)
+    ctx.strokeStyle="rgba(43,26,59,0.55)";
+    ctx.lineWidth=Math.max(2, r*0.08);
+    ctx.lineCap="round";
+    ctx.beginPath();
+    ctx.moveTo(-r*0.78, r*0.12);
+    ctx.lineTo(-r*0.92, r*0.46);
+    ctx.moveTo(r*0.78, r*0.12);
+    ctx.lineTo(r*0.92, r*0.46);
+    ctx.stroke();
+
     ctx.restore();
   }
 
+  /* ===== HUD (small + minimal) ===== */
   function drawHUD(){
-    ctx.fillStyle="rgba(30,255,214,0.14)";
-    rr(12,12,400,68,16); ctx.fill();
-    ctx.strokeStyle="rgba(255,107,155,0.28)";
+    // minimal top-left score only
+    ctx.fillStyle="rgba(10,12,30,0.55)";
+    rr(12,12,170,46,14); ctx.fill();
+    ctx.strokeStyle="rgba(30,255,214,0.22)";
     ctx.lineWidth=2;
-    rr(14,14,396,64,15); ctx.stroke();
+    rr(14,14,166,42,13); ctx.stroke();
 
     ctx.fillStyle="#fff";
     ctx.font="1000 14px system-ui";
-    ctx.fillText(`${player.skin.name} • KG: ${player.kg.toFixed(2)} • SCORE: ${Math.floor(player.score)}`, 26, 40);
-
-    ctx.font="850 12px system-ui";
-    ctx.fillStyle="rgba(255,255,255,0.88)";
-    ctx.fillText(`Thắng: chạm ĐÍCH khi ≤${TARGET_KG}kg • Thua nếu >${LOSE_KG}kg`, 26, 60);
+    ctx.fillText(`SCORE: ${Math.floor(player.score)}`, 26, 40);
   }
 
   /* ===== Loop ===== */
@@ -1374,17 +1511,21 @@ de<!doctype html>
     ctx.clearRect(0,0,W(),H());
     drawBG(t);
 
-    if(mode==="play" || mode==="intro"){
+    if(mode==="play" || mode==="welcome" || mode==="tutorial"){
       drawWorld(t);
-      drawHUD();
+      if(mode==="play") drawHUD();
     }
 
     requestAnimationFrame(loop);
   }
 
   /* ===== Start ===== */
-  const hudStart = () => { hudEl.style.display="none"; mode="intro"; reset(); requestAnimationFrame(loop); };
-  hudStart();
+  function init(){
+    // show welcome (already visible by default)
+    reset();
+    requestAnimationFrame(loop);
+  }
+  init();
 
 })();
 </script>
