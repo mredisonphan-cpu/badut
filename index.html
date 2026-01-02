@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport"
       content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,viewport-fit=cover"/>
-<title>BÀ ĐỤT – Upgrade v4 (Welcome + Ingame Guide + Buttons Fix + HUD Score/KG + Player Cute Bow + No Position Jump)</title>
+<title>BÀ ĐỤT – v5 (HUD minimal + Bottom controls 1 row + Player arms tiny + flower smaller + No position jerk on eat)</title>
 <style>
   html,body{
     margin:0;height:100%;
@@ -17,12 +17,8 @@
     overscroll-behavior:none;
     position:fixed; inset:0;
   }
-  canvas{
-    width:100vw;height:100vh;
-    display:block;
-    touch-action:none;
-    background:linear-gradient(180deg,#071a2b 0%, #1a0f2f 55%, #1a0f2f 100%);
-  }
+  canvas{ width:100vw;height:100vh; display:block; touch-action:none; }
+
   :root{
     --safeT: env(safe-area-inset-top);
     --safeR: env(safe-area-inset-right);
@@ -33,49 +29,118 @@
   /* ===== HUD wrapper ===== */
   #hud{ position:fixed; inset:0; pointer-events:none; touch-action:none; }
 
+  /* ===== Minimal top HUD (NO BOX) ===== */
+  #hudTop{
+    position:absolute;
+    left:calc(12px + var(--safeL));
+    top:calc(10px + var(--safeT));
+    display:flex;
+    gap:14px;
+    align-items:center;
+    pointer-events:none;
+    color:#fff;
+    font-weight:1000;
+    text-shadow:0 2px 10px rgba(0,0,0,.35);
+  }
+  #scoreText{ font-size:18px; }
+  #kgWrap{
+    display:flex; gap:8px; align-items:center;
+    font-size:16px;
+  }
+  #kgIcon{
+    width:18px; height:18px;
+    border-radius:6px;
+    display:grid; place-items:center;
+    background:rgba(255,255,255,0.14);
+    border:1px solid rgba(255,255,255,0.18);
+    box-shadow:0 6px 16px rgba(0,0,0,0.18);
+    font-size:14px;
+    line-height:1;
+  }
+
   /* ===== Buttons base ===== */
   .btn{
-    position:absolute;
     pointer-events:auto;
     display:grid; place-items:center;
-    font-weight:950; color:#fff;
-    border-radius:18px;
-    background:rgba(30,255,214,0.18);
-    border:1px solid rgba(30,255,214,0.45);
-    border-bottom:2px solid rgba(255,107,155,0.35);
+    font-weight:1000; color:#fff;
+    border-radius:14px;
+    background:rgba(30,255,214,0.16);
+    border:1px solid rgba(30,255,214,0.40);
+    box-shadow:0 10px 26px rgba(0,0,0,.22);
     backdrop-filter:blur(10px) saturate(140%);
     -webkit-backdrop-filter:blur(10px) saturate(140%);
-    box-shadow:0 10px 28px rgba(0,0,0,.22);
     touch-action:none;
     user-select:none;
   }
-  .btn:active{ background:rgba(255,107,155,0.25); transform:scale(.98); }
+  .btn:active{ background:rgba(255,107,155,0.22); transform:scale(.98); }
 
-  /* ===== HUD layout: chống đè nút + gọn đáy màn hình ===== */
-  .pad{
+  /* ===== Bottom layout: gọn 1 hàng =====
+     Thứ tự: điều hướng -> zoom vòng tròn -> (hàng dưới) ị & bủm xì
+  */
+  #bottomBar{
     position:absolute;
-    bottom:calc(12px + var(--safeB));
+    left:calc(10px + var(--safeL));
+    right:calc(10px + var(--safeR));
+    bottom:calc(10px + var(--safeB));
     display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
     gap:10px;
     pointer-events:auto;
   }
-  #padLeft{ left:calc(12px + var(--safeL)); }
-  #padRight{
-    right:calc(12px + var(--safeR));
-    flex-direction:column;
+
+  #navGroup{
+    display:flex;
+    gap:8px;
     align-items:flex-end;
   }
+  #navGroup .btn{ width:56px; height:56px; font-size:22px; }
 
-  /* kích thước nút mới (nhỏ lại) */
-  .btn.small{ width:58px; height:58px; font-size:22px; border-radius:16px; position:static; }
-  .btn.mid  { width:96px; height:54px; font-size:14px; border-radius:16px; position:static; }
-  .btn.big  { width:96px; height:76px; font-size:13px; letter-spacing:0.5px; border-radius:18px; position:static; }
-  .btn.tiny { width:52px; height:40px; font-size:13px; border-radius:14px; }
+  /* zoom vòng tròn ở giữa */
+  #zoomGroup{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+  }
+  #zoomCircle{
+    width:64px;height:64px;
+    border-radius:999px;
+    font-size:14px;
+    letter-spacing:0.4px;
+  }
+  #zoomLabel{
+    font-size:12px;
+    font-weight:950;
+    opacity:0.88;
+    color:#fff;
+    text-shadow:0 2px 10px rgba(0,0,0,.35);
+    pointer-events:none;
+  }
 
+  /* group bên phải: 2 hàng (trên JUMP, dưới: ị & bủm xì) */
+  #actGroup{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+    gap:8px;
+  }
+  #jump{ width:96px; height:56px; font-size:14px; border-radius:16px; }
+  #subActs{
+    display:flex;
+    gap:8px;
+  }
+  #subActs .btn{ width:64px; height:44px; font-size:14px; border-radius:14px; }
+
+  /* Reset nhỏ góc phải trên */
   #reset{
-    top:calc(12px + var(--safeT));
-    right:calc(12px + var(--safeR));
-    bottom:auto;
+    position:absolute;
+    top:calc(10px + var(--safeT));
+    right:calc(10px + var(--safeR));
+    width:44px;height:36px;
+    font-size:13px;
+    border-radius:12px;
+    pointer-events:auto;
   }
 
   /* ===== Welcome overlay ===== */
@@ -85,7 +150,7 @@
     justify-content:center;
     align-items:center;
     padding:calc(14px + var(--safeT)) calc(14px + var(--safeR)) calc(14px + var(--safeB)) calc(14px + var(--safeL));
-    background:radial-gradient(1200px 700px at 50% 30%, rgba(30,255,214,0.24), rgba(0,0,0,0.78) 58%);
+    background:radial-gradient(1200px 700px at 50% 30%, rgba(30,255,214,0.22), rgba(0,0,0,0.78) 58%);
     color:#fff;
   }
   #welcomeCard{
@@ -98,29 +163,8 @@
     backdrop-filter:blur(12px) saturate(150%);
     -webkit-backdrop-filter:blur(12px) saturate(150%);
   }
-  #welcomeTop{
-    display:flex; align-items:center; gap:12px; margin-bottom:10px;
-  }
-  #mascot{
-    width:62px; height:62px; border-radius:20px;
-    background:linear-gradient(135deg, rgba(255,107,155,0.26), rgba(30,255,214,0.20));
-    border:1px solid rgba(255,255,255,0.14);
-    box-shadow:0 12px 26px rgba(0,0,0,0.25);
-    display:grid; place-items:center;
-  }
-  #welcomeTitle{
-    font-weight:1000;
-    font-size:20px;
-    margin:0;
-    letter-spacing:0.3px;
-  }
-  #welcomeSub{
-    margin:6px 0 12px;
-    opacity:0.92;
-    font-weight:850;
-    line-height:1.35;
-    font-size:13px;
-  }
+  #welcomeTitle{ font-weight:1000; font-size:20px; margin:0 0 6px; letter-spacing:0.3px; }
+  #welcomeSub{ margin:0 0 12px; opacity:0.92; font-weight:850; line-height:1.35; font-size:13px; }
   #playBtn{
     margin-top:10px;
     text-align:center;
@@ -133,14 +177,13 @@
     pointer-events:auto;
   }
   #playBtn:active{ background:rgba(255,107,155,0.25); transform:scale(.99); }
-  #welcomeHint{ opacity:0.85; font-weight:850; font-size:12px; margin-top:8px; text-align:center; }
 
   /* ===== In-game guide toast ===== */
   #guideToast{
     position:fixed;
     left:calc(12px + var(--safeL));
     right:calc(12px + var(--safeR));
-    top:calc(86px + var(--safeT));
+    top:calc(54px + var(--safeT));
     display:none;
     pointer-events:none;
     z-index:9;
@@ -148,10 +191,10 @@
   #guideToastInner{
     max-width:720px;
     margin:0 auto;
-    border-radius:18px;
-    padding:12px 12px;
-    background:rgba(10,12,30,0.68);
-    border:1px solid rgba(255,107,155,0.40);
+    border-radius:16px;
+    padding:10px 12px;
+    background:rgba(10,12,30,0.64);
+    border:1px solid rgba(255,107,155,0.38);
     backdrop-filter:blur(10px) saturate(140%);
     -webkit-backdrop-filter:blur(10px) saturate(140%);
     box-shadow:0 14px 38px rgba(0,0,0,0.35);
@@ -213,53 +256,49 @@
 <canvas id="c"></canvas>
 
 <div id="hud" style="display:none;">
-  <div id="padLeft" class="pad">
-    <div id="left"  class="btn small">←</div>
-    <div id="right" class="btn small">→</div>
+  <div id="hudTop">
+    <div id="scoreText">0</div>
+    <div id="kgWrap"><div id="kgIcon">⚖️</div><div id="kgText">0kg</div></div>
   </div>
 
-  <div id="padRight" class="pad">
-    <div id="jump"  class="btn big">JUMP</div>
-    <div id="fart"  class="btn mid">Bủm xì</div>
-    <div id="poop"  class="btn mid">🚽</div>
-  </div>
+  <div id="reset" class="btn">R</div>
 
-  <div id="reset" class="btn tiny">R</div>
+  <div id="bottomBar">
+    <div id="navGroup">
+      <div id="left" class="btn">←</div>
+      <div id="right" class="btn">→</div>
+    </div>
+
+    <div id="zoomGroup">
+      <div id="zoomCircle" class="btn">ZOOM</div>
+      <div id="zoomLabel">vòng tròn</div>
+    </div>
+
+    <div id="actGroup">
+      <div id="jump" class="btn">JUMP</div>
+      <div id="subActs">
+        <div id="poop" class="btn">🚽</div>
+        <div id="fart" class="btn">Bủm</div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div id="welcome">
   <div id="welcomeCard">
-    <div id="welcomeTop">
-      <div id="mascot">
-        <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
-          <circle cx="22" cy="22" r="18" fill="rgba(255,224,194,0.92)"/>
-          <path d="M10 18 C 14 9, 30 9, 34 18" fill="rgba(43,26,59,0.95)"/>
-          <circle cx="16.5" cy="21" r="2.6" fill="#0b0f1f"/>
-          <circle cx="27.5" cy="21" r="2.6" fill="#0b0f1f"/>
-          <path d="M16 27 C 20 31, 24 31, 28 27" stroke="rgba(122,63,43,0.95)" stroke-width="2.6" stroke-linecap="round"/>
-          <circle cx="14" cy="26" r="3.2" fill="rgba(255,107,155,0.35)"/>
-          <circle cx="30" cy="26" r="3.2" fill="rgba(255,107,155,0.35)"/>
-        </svg>
-      </div>
-      <div style="flex:1">
-        <div id="welcomeTitle">BÀ ĐỤT – Ăn Vặt & Giảm Cân 🎰✨</div>
-        <div id="welcomeSub">
-          Chơi vui kiểu “né đồ ăn rơi” để <b>giảm cân qua màn</b>.<br/>
-          Chạm <b>ĐÍCH</b> khi ≤60kg để thắng. >130kg là thua!
-        </div>
-      </div>
+    <div id="welcomeTitle">BÀ ĐỤT – Ăn Vặt & Giảm Cân 🎰✨</div>
+    <div id="welcomeSub">
+      Né đồ ăn rơi để lấy điểm. Chạm <b>ĐÍCH</b> khi ≤60kg để thắng. >130kg là thua!
     </div>
-
     <div id="playBtn">BẤM ĐỂ CHƠI (bật nhạc & âm thanh)</div>
-    <div id="welcomeHint">Tip: Giảm cân thì thon hơn & nhảy cao hơn.</div>
   </div>
 </div>
 
 <div id="guideToast">
   <div id="guideToastInner">
     <b>HƯỚNG DẪN</b><br/>
-    1) Né đồ ăn rơi để lấy điểm & giảm áp lực tăng cân.<br/>
-    2) <b>Bủm xì</b> giảm ít • 3) <b>🚽</b> giảm nhiều (đứng gần bồn cầu).
+    1) Né đồ ăn rơi để lấy điểm.<br/>
+    2) <b>Bủm</b> giảm ít • 3) <b>🚽</b> giảm nhiều (đứng gần bồn cầu).
   </div>
 </div>
 
@@ -307,10 +346,8 @@
   resize();
   const W=()=>innerWidth, H=()=>innerHeight;
 
-  /* ===== Audio ===== */
+  /* ===== Audio (simple) ===== */
   let AC=null, audioOn=true, unlocked=false;
-  let bgm=null;
-
   function ensureAudio(){
     if(!AC) AC = new (window.AudioContext||window.webkitAudioContext)();
     return AC;
@@ -321,102 +358,7 @@
     ensureAudio();
     if(AC.state==="suspended") AC.resume().catch(()=>{});
     sfx("ui");
-    startBGM();
   }
-
-  function startBGM(){
-    if(!audioOn) return;
-    if(!AC) ensureAudio();
-    if(bgm) return;
-
-    const t0 = AC.currentTime;
-    const master = AC.createGain();
-    master.gain.setValueAtTime(0.0001, t0);
-    master.gain.linearRampToValueAtTime(0.18, t0+0.8);
-    master.connect(AC.destination);
-
-    const lp = AC.createBiquadFilter();
-    lp.type="lowpass"; lp.frequency.value=1400;
-    lp.connect(master);
-
-    const lead = AC.createOscillator();
-    lead.type="triangle";
-    const leadGain = AC.createGain();
-    leadGain.gain.value = 0.0;
-    lead.connect(leadGain); leadGain.connect(lp);
-
-    const bass = AC.createOscillator();
-    bass.type="sine";
-    const bassGain = AC.createGain();
-    bassGain.gain.value = 0.0;
-    bass.connect(bassGain); bassGain.connect(lp);
-
-    const noiseBuf = AC.createBuffer(1, AC.sampleRate*2, AC.sampleRate);
-    const data = noiseBuf.getChannelData(0);
-    for(let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*0.20;
-    const noise = AC.createBufferSource();
-    noise.buffer=noiseBuf; noise.loop=true;
-    const hp = AC.createBiquadFilter();
-    hp.type="highpass"; hp.frequency.value=2600;
-    const noiseGain = AC.createGain();
-    noiseGain.gain.value = 0.0;
-    noise.connect(hp); hp.connect(noiseGain); noiseGain.connect(master);
-
-    lead.start(t0); bass.start(t0); noise.start(t0);
-
-    const notes = [392, 440, 523.25, 659.25, 523.25, 440];
-    const bassNotes = [98, 110, 130.81, 98];
-    let i=0, bi=0;
-
-    function tick(){
-      if(!bgm) return;
-      const t=AC.currentTime;
-
-      lead.frequency.setValueAtTime(notes[i%notes.length], t);
-      leadGain.gain.cancelScheduledValues(t);
-      leadGain.gain.setValueAtTime(leadGain.gain.value, t);
-      leadGain.gain.linearRampToValueAtTime(0.06, t+0.02);
-      leadGain.gain.linearRampToValueAtTime(0.00, t+0.20);
-
-      if(i%2===0){
-        bass.frequency.setValueAtTime(bassNotes[bi%bassNotes.length], t);
-        bi++;
-        bassGain.gain.cancelScheduledValues(t);
-        bassGain.gain.setValueAtTime(bassGain.gain.value, t);
-        bassGain.gain.linearRampToValueAtTime(0.05, t+0.02);
-        bassGain.gain.linearRampToValueAtTime(0.0, t+0.30);
-      }
-
-      noiseGain.gain.cancelScheduledValues(t);
-      noiseGain.gain.setValueAtTime(0.0, t);
-      noiseGain.gain.linearRampToValueAtTime(0.02, t+0.01);
-      noiseGain.gain.linearRampToValueAtTime(0.0, t+0.06);
-
-      i++;
-      bgm.timer = setTimeout(tick, 260);
-    }
-
-    bgm = {master, lp, lead, leadGain, bass, bassGain, noise, noiseGain, hp, timer:null};
-    tick();
-  }
-
-  function stopBGM(){
-    if(!bgm || !AC) return;
-    try{
-      const t=AC.currentTime;
-      bgm.master.gain.cancelScheduledValues(t);
-      bgm.master.gain.setValueAtTime(bgm.master.gain.value, t);
-      bgm.master.gain.linearRampToValueAtTime(0.0001, t+0.25);
-      if(bgm.timer) clearTimeout(bgm.timer);
-      setTimeout(()=>{
-        try{ bgm.lead.stop(); }catch{}
-        try{ bgm.bass.stop(); }catch{}
-        try{ bgm.noise.stop(); }catch{}
-        bgm=null;
-      }, 320);
-    }catch{ bgm=null; }
-  }
-
   function sfx(type){
     if(!audioOn) return;
     ensureAudio();
@@ -471,9 +413,9 @@
     ctx.closePath();
   }
 
-  /* ===== UI Buttons ===== */
+  /* ===== UI Buttons bind ===== */
   const hudEl = document.getElementById("hud");
-  const V = {l:false,r:false,j:false,f:false,p:false, reset:false};
+  const V = {l:false,r:false,j:false,f:false,p:false,z:false, reset:false};
 
   function bindHold(id, key){
     const el=document.getElementById(id);
@@ -492,10 +434,15 @@
   bindHold("jump","j");
   bindHold("fart","f");
   bindHold("poop","p");
+  bindHold("zoomCircle","z");
 
   const resetBtn=document.getElementById("reset");
   resetBtn.addEventListener("touchstart",(e)=>{e.preventDefault(); unlockAudio(); V.reset=true;},{passive:false});
   resetBtn.addEventListener("pointerdown",(e)=>{e.preventDefault(); unlockAudio(); V.reset=true;},{passive:false});
+
+  /* ===== HUD text nodes ===== */
+  const scoreTextEl = document.getElementById("scoreText");
+  const kgTextEl = document.getElementById("kgText");
 
   /* ===== Welcome ===== */
   const welcomeEl = document.getElementById("welcome");
@@ -506,7 +453,6 @@
     guideToast.style.display="block";
     setTimeout(()=>{ guideToast.style.display="none"; }, 5200);
   }
-
   function startGameFromWelcome(e){
     e.preventDefault();
     unlockAudio();
@@ -530,8 +476,8 @@
   const againBtn = document.getElementById("againBtn");
   const clearBtn = document.getElementById("clearBtn");
 
-  const LS_KEY="badut_ranking_v4";
-  const BEST_KEY="badut_best_v4";
+  const LS_KEY="badut_ranking_v5";
+  const BEST_KEY="badut_best_v5";
 
   function loadRanking(){ try{ return JSON.parse(localStorage.getItem(LS_KEY) || "[]"); } catch{ return []; } }
   function saveRanking(arr){ localStorage.setItem(LS_KEY, JSON.stringify(arr)); }
@@ -564,27 +510,26 @@
     renderRanking();
     if(type==="win"){
       endTitle.textContent = "🎉 THẮNG!";
-      endInfo.textContent = `Bạn đã giảm cân thành công! Điểm: ${Math.floor(player.score)} pts • KG: ${player.kg.toFixed(2)}`;
+      endInfo.textContent = `Điểm: ${Math.floor(player.score)} pts • KG: ${player.kg.toFixed(2)}kg`;
     }else{
       endTitle.textContent = "😵 THUA!";
-      endInfo.textContent = `Lý do: ${reason || "Quá cân"} • Điểm: ${Math.floor(player.score)} pts • KG: ${player.kg.toFixed(2)}`;
+      endInfo.textContent = `Lý do: ${reason || "Quá cân"} • Điểm: ${Math.floor(player.score)} pts • KG: ${player.kg.toFixed(2)}kg`;
     }
   }
   function hideEnd(){ endEl.style.display="none"; }
 
-  againBtn.addEventListener("click",(e)=>{ e.preventDefault(); unlockAudio(); sfx("ui"); hideEnd(); mode="play"; reset(); startBGM(); showGuideToast(); });
-  againBtn.addEventListener("touchstart",(e)=>{ e.preventDefault(); unlockAudio(); sfx("ui"); hideEnd(); mode="play"; reset(); startBGM(); showGuideToast(); }, {passive:false});
-
+  againBtn.addEventListener("click",(e)=>{ e.preventDefault(); unlockAudio(); sfx("ui"); hideEnd(); mode="play"; reset(); showGuideToast(); });
+  againBtn.addEventListener("touchstart",(e)=>{ e.preventDefault(); unlockAudio(); sfx("ui"); hideEnd(); mode="play"; reset(); showGuideToast(); }, {passive:false});
   clearBtn.addEventListener("click",(e)=>{ e.preventDefault(); unlockAudio(); sfx("ui"); saveRanking([]); setBest(0); renderRanking(); });
   clearBtn.addEventListener("touchstart",(e)=>{ e.preventDefault(); unlockAudio(); sfx("ui"); saveRanking([]); setBest(0); renderRanking(); }, {passive:false});
 
-  /* ===== Food definitions ===== */
+  /* ===== Foods ===== */
   const FOODS = [
-    {id:"milk", name:"Trà sữa",  kg:1.5},
-    {id:"ice",  name:"Kem",      kg:2.5},
-    {id:"nug",  name:"Gà viên",  kg:4.0},
-    {id:"burg", name:"Burger",   kg:6.0},
-    {id:"piz",  name:"Pizza",    kg:7.5},
+    {id:"milk", kg:1.5},
+    {id:"ice",  kg:2.5},
+    {id:"nug",  kg:4.0},
+    {id:"burg", kg:6.0},
+    {id:"piz",  kg:7.5},
   ];
   function drawFoodIcon(type, x,y, s){
     ctx.save();
@@ -642,7 +587,7 @@
     ctx.translate(x,y);
     const w=s, h=s;
 
-    const glow = 0.18 + (Math.sin(t*3.2)*0.5+0.5)*0.18;
+    const glow = 0.14 + (Math.sin(t*3.2)*0.5+0.5)*0.16;
     ctx.globalAlpha=glow;
     ctx.fillStyle="rgba(30,255,214,0.9)";
     rr(-5,-5,w+10,h+10,16); ctx.fill();
@@ -656,13 +601,6 @@
     ctx.fillStyle="rgba(255,255,255,0.86)";
     rr(w*0.28, h*0.76, w*0.40, h*0.16, 12); ctx.fill();
 
-    ctx.globalAlpha=0.55;
-    ctx.fillStyle="rgba(255,107,155,0.9)";
-    ctx.beginPath(); ctx.arc(w*0.84, h*0.20, 3.2, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle="rgba(255,255,255,0.9)";
-    ctx.beginPath(); ctx.arc(w*0.78, h*0.28, 2.2, 0, Math.PI*2); ctx.fill();
-    ctx.globalAlpha=1;
-
     ctx.restore();
   }
 
@@ -672,57 +610,39 @@
     ctx.save();
     ctx.translate(x,y);
 
-    ctx.globalAlpha=0.12 + blink*0.18;
+    ctx.globalAlpha=0.10 + blink*0.16;
     ctx.fillStyle="rgba(255,107,155,0.95)";
     rr(-18,-22,w+36,h+46,22); ctx.fill();
     ctx.globalAlpha=1;
 
     const bw = Math.min(280, w*4.2);
     const bx = w/2 - bw/2;
-    const by = -72;
+    const by = -66;
 
-    ctx.fillStyle="rgba(10,12,30,0.75)";
-    rr(bx,by,bw,46,18); ctx.fill();
+    ctx.fillStyle="rgba(10,12,30,0.70)";
+    rr(bx,by,bw,42,16); ctx.fill();
 
-    const bulbs = 18;
+    const bulbs = 16;
     for(let i=0;i<bulbs;i++){
       const px = bx + 14 + i*(bw-28)/(bulbs-1);
       const on = ((i + Math.floor(t*10)) % 3===0) ? 1 : 0;
-      ctx.globalAlpha = 0.35 + on*0.45;
+      ctx.globalAlpha = 0.30 + on*0.45;
       ctx.fillStyle = on ? "rgba(30,255,214,0.95)" : "rgba(255,107,155,0.55)";
-      ctx.beginPath(); ctx.arc(px, by+10, 4.2, 0, Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.arc(px, by+36, 4.2, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(px, by+10, 4.0, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(px, by+32, 4.0, 0, Math.PI*2); ctx.fill();
     }
     ctx.globalAlpha=1;
 
     ctx.fillStyle="#fff";
-    ctx.font="1000 18px system-ui";
+    ctx.font="1000 16px system-ui";
     ctx.textAlign="center";
-    ctx.fillText("ĐÍCH ĐẾN", bx+bw/2, by+30);
+    ctx.fillText("ĐÍCH", bx+bw/2, by+27);
     ctx.textAlign="left";
-
-    const ax = w/2;
-    const ay = -18;
-    ctx.globalAlpha=0.55 + blink*0.35;
-    ctx.fillStyle="rgba(255,255,255,0.95)";
-    ctx.beginPath();
-    ctx.moveTo(ax, ay);
-    ctx.lineTo(ax-18, ay-16);
-    ctx.lineTo(ax-6, ay-16);
-    ctx.lineTo(ax-6, ay-34);
-    ctx.lineTo(ax+6, ay-34);
-    ctx.lineTo(ax+6, ay-16);
-    ctx.lineTo(ax+18, ay-16);
-    ctx.closePath();
-    ctx.fill();
-    ctx.globalAlpha=1;
 
     ctx.fillStyle="rgba(255,255,255,0.12)";
     rr(0,0,w,h,16); ctx.fill();
-    ctx.fillStyle="rgba(30,255,214,0.16)";
-    rr(8,10,w-16,h-20,14); ctx.fill();
 
-    ctx.strokeStyle=`rgba(30,255,214,${0.35+blink*0.25})`;
+    ctx.strokeStyle=`rgba(30,255,214,${0.30+blink*0.22})`;
     ctx.lineWidth=3;
     rr(6,6,w-12,h-12,14); ctx.stroke();
 
@@ -746,7 +666,6 @@
 "#T.###......o.......o........######################.........oooooo..............##T......###########..T...T...T...T...T.###....oo.........##..o...o..#o...o...o..o..................................#",
 "#############################################################################################################################################################################################"
   ];
-
   const maxLen = Math.max(...level.map(r=>r.length));
   for(let i=0;i<level.length;i++){
     if(level[i].length < maxLen) level[i] = level[i] + "#".repeat(maxLen - level[i].length);
@@ -776,6 +695,17 @@
       if(ch==="S") start={x:px+12, y:py+6};
       if(ch==="F") finish={x:px+12,y:py+6,w:TILE,h:TILE};
     }
+  }
+
+  /* ===== Zoom (vòng tròn) ===== */
+  let zoom = 1.00;          // scale view
+  const Z_MIN=0.82, Z_MAX=1.26;
+  let zoomVel = 0;
+  function updateZoom(dt){
+    // giữ ấn ZOOM => zoom in nhẹ; thả => zoom out về 1.0
+    const target = V.z ? Z_MAX : 1.0;
+    zoom += (target - zoom) * (1 - Math.pow(0.0001, dt)); // smooth
+    zoom = clamp(zoom, Z_MIN, Z_MAX);
   }
 
   /* ===== FX ===== */
@@ -848,7 +778,9 @@
     blinkT:0,
     skin: { base:"#ffe0c2", hair:"#2b1a3b", name:"Bà Đụt" },
     inAir:false,
-    ateDuringAir:false
+    ateDuringAir:false,
+    // để chống “giựt vị trí”: luôn giữ tâm + làm collision sau khi đổi kg
+    pendingKg: null
   };
   const cam={x:0,y:0};
   let mode="welcome";
@@ -857,29 +789,86 @@
   function showCenter(text){
     centerMsg.text=text;
     centerMsg.t=0;
-    centerMsg.life=1.25;
-    centerMsg.shake=10;
+    centerMsg.life=1.05;
+    centerMsg.shake=8;
     sfx("warn");
   }
 
   function kgT(){ return clamp((player.kg-50)/(125-50),0,1); }
-  function radius(){ const t=kgT(); return 18 + t*18; }
+  function radiusFor(kg){
+    const t=clamp((kg-50)/(125-50),0,1);
+    return 18 + t*18;
+  }
+  function radius(){ return radiusFor(player.kg); }
   function jumpPower(){ const t=kgT(); return 820 - t*320; }
 
-  /* ===== IMPORTANT: Fix “đổi kg bị dịch vị trí” ===== */
-  function applyKg(newKg){
-    const oldR = radius();
+  /* ===== FIX #1: đổi kg KHÔNG giựt vị trí (giữ nguyên TÂM) ===== */
+  function setKgKeepCenter(newKg){
+    newKg = clamp(newKg, KG_MIN, KG_MAX);
+    const oldR = radiusFor(player.kg);
     const cx = player.x + oldR;
     const cy = player.y + oldR;
 
-    player.kg = clamp(newKg, KG_MIN, KG_MAX);
+    player.kg = newKg;
 
-    const newR = radius();
+    const newR = radiusFor(player.kg);
     player.x = cx - newR;
     player.y = cy - newR;
 
-    player.x = clamp(player.x, 0, worldW-newR*2);
-    player.y = clamp(player.y, 0, worldH-newR*2);
+    player.x = clamp(player.x, 0, worldW - newR*2);
+    player.y = clamp(player.y, 0, worldH - newR*2);
+  }
+
+  /* ===== FIX #2: sau khi đổi kg, đẩy ra khỏi tường nếu bị kẹt ===== */
+  function resolvePenetration(){
+    const r=radius();
+    let pr={x:player.x,y:player.y,w:r*2,h:r*2};
+    // tách theo trục nhỏ (4 vòng, đủ nhẹ)
+    for(let iter=0; iter<4; iter++){
+      let pushed=false;
+      // blocks
+      for(const b of blocks){
+        if(!rects(pr,b)) continue;
+        const dx1 = (b.x + b.w) - pr.x;        // push right
+        const dx2 = (pr.x + pr.w) - b.x;       // push left
+        const dy1 = (b.y + b.h) - pr.y;        // push down
+        const dy2 = (pr.y + pr.h) - b.y;       // push up
+        const minX = Math.min(dx1, dx2);
+        const minY = Math.min(dy1, dy2);
+        if(minX < minY){
+          if(dx1 < dx2) player.x = b.x + b.w;
+          else player.x = b.x - pr.w;
+          pr.x=player.x; player.vx=0;
+        }else{
+          if(dy1 < dy2) player.y = b.y + b.h;
+          else player.y = b.y - pr.h;
+          pr.y=player.y; player.vy=0;
+        }
+        pushed=true;
+      }
+      // closed doors
+      for(const d of doors){
+        if(d.open) continue;
+        if(!rects(pr,d)) continue;
+        const dx1 = (d.x + d.w) - pr.x;
+        const dx2 = (pr.x + pr.w) - d.x;
+        const dy1 = (d.y + d.h) - pr.y;
+        const dy2 = (pr.y + pr.h) - d.y;
+        const minX = Math.min(dx1, dx2);
+        const minY = Math.min(dy1, dy2);
+        if(minX < minY){
+          if(dx1 < dx2) player.x = d.x + d.w;
+          else player.x = d.x - pr.w;
+          pr.x=player.x; player.vx=0;
+        }else{
+          if(dy1 < dy2) player.y = d.y + d.h;
+          else player.y = d.y - pr.h;
+          pr.y=player.y; player.vy=0;
+        }
+        pushed=true;
+      }
+      if(!pushed) break;
+    }
   }
 
   function reset(){
@@ -892,13 +881,12 @@
     player.facing=1;
     player.inAir=false;
     player.ateDuringAir=false;
+    player.pendingKg=null;
+    zoom=1.0;
+
     for(const f of foodsStatic) f.alive=true;
     falling.length=0; particles.length=0; popups.length=0; confetti.length=0;
     for(const d of doors) d.open=false;
-
-    const r=radius();
-    player.x = clamp(player.x, 0, worldW-r*2);
-    player.y = clamp(player.y, 0, worldH-r*2);
 
     popup("BÀ ĐỤT XUẤT PHÁT!", player.x, player.y-24, true);
   }
@@ -914,7 +902,6 @@
   function lose(reason){
     if(mode!=="play") return;
     mode="end";
-    stopBGM();
     sfx("hit");
     if(player.score > getBest()) setBest(player.score);
     showEnd("lose", reason);
@@ -922,7 +909,6 @@
   function win(){
     if(mode!=="play") return;
     mode="end";
-    stopBGM();
     sfx("door");
     if(player.score > getBest()) setBest(player.score);
     pushRanking({ name: player.skin.name, score: player.score, ts: Date.now() });
@@ -933,11 +919,13 @@
   function step(dt){
     if(mode!=="play") return;
 
+    updateZoom(dt);
+
     player.score += dt * 2.0;
 
     centerMsg.t += dt;
     if(centerMsg.t > centerMsg.life) centerMsg.life=0;
-    centerMsg.shake = Math.max(0, centerMsg.shake - dt*28);
+    centerMsg.shake = Math.max(0, centerMsg.shake - dt*26);
 
     fallTimer += dt;
     const rate=1.25;
@@ -953,7 +941,6 @@
       p.t+=dt; p.y+=p.vy*dt;
       if(p.t>=p.life) popups.splice(i,1);
     }
-
     for(let i=confetti.length-1;i>=0;i--){
       const c=confetti[i];
       c.t+=dt; c.x+=c.vx*dt; c.y+=c.vy*dt; c.vy+=60*dt; c.rot+=c.vr*dt;
@@ -994,10 +981,10 @@
 
     player.vx += ax*dt;
     if(!V.l && !V.r) player.vx *= Math.pow(0.82, 60*dt);
-    player.vx = clamp(player.vx, -MAXS, MAXS);
+    player.vx = clamp(player.vx, -340, 340);
 
     const moving=Math.abs(player.vx)>20;
-    if(moving && player.onGround) player.runT += dt*(1.6 + Math.abs(player.vx)/MAXS);
+    if(moving && player.onGround) player.runT += dt*(1.6 + Math.abs(player.vx)/340);
     else player.runT *= 0.96;
 
     step.prevJ = step.prevJ ?? false;
@@ -1012,19 +999,21 @@
 
     if(V.f && player.fartCD<=0){
       const before=player.kg;
-      applyKg(player.kg*0.999);
+      setKgKeepCenter(player.kg*0.999);
+      resolvePenetration();
       player.fartCD=0.12;
       if(before-player.kg>0){
         const r=radius();
         const fx=player.x+r+(player.facing>0 ? -r*0.95 : r*0.95);
-        const fy=player.y+r*1.15;
+        const fy=player.y+r*1.12;
         spawnFart(fx, fy, -player.facing);
         sfx("fart");
       }
     }
 
-    player.vy += GRAV*dt;
+    player.vy += 2450*dt;
 
+    // prepare rect
     const r=radius();
     let pr={x:player.x,y:player.y,w:r*2,h:r*2};
 
@@ -1042,14 +1031,13 @@
       else if(player.vx<0) player.x = b.x + b.w;
       player.vx=0; pr.x=player.x;
     }
-
     for(const d of doors){
       if(d.open) continue;
       if(!rects(pr,d)) continue;
       if(player.vx>0) player.x = d.x - pr.w;
       else if(player.vx<0) player.x = d.x + d.w;
       player.vx=0; pr.x=player.x;
-      popup(`ỐM QUÁ! CẦN ≥ ${d.reqKg}KG`, d.x-30, d.y-10);
+      popup(`CẦN ≥ ${d.reqKg}KG`, d.x-10, d.y-10);
     }
 
     // Y move + collisions
@@ -1075,12 +1063,17 @@
       player.inAir=false;
     }
 
-    // eat static
+    // Eat static: FIX chống giật => đổi KG, resolve, rồi build pr lại
     for(const f of foodsStatic){
       if(!f.alive) continue;
       if(rects(pr,f)){
         f.alive=false;
-        applyKg(player.kg + f.def.kg);
+        setKgKeepCenter(player.kg + f.def.kg);
+        resolvePenetration();
+        // rebuild pr sau khi đổi kg
+        const nr=radius();
+        pr={x:player.x,y:player.y,w:nr*2,h:nr*2};
+
         spawnSparkle(f.x+14,f.y+14,10);
         popup(`+${f.def.kg}kg`, f.x, f.y-8);
         player.ateDuringAir = player.ateDuringAir || !player.onGround;
@@ -1088,11 +1081,15 @@
       }
     }
 
-    // eat falling
+    // Eat falling
     for(let i=falling.length-1;i>=0;i--){
       const f=falling[i];
       if(rects(pr,{x:f.x,y:f.y,w:f.size,h:f.size})){
-        applyKg(player.kg + f.def.kg);
+        setKgKeepCenter(player.kg + f.def.kg);
+        resolvePenetration();
+        const nr=radius();
+        pr={x:player.x,y:player.y,w:nr*2,h:nr*2};
+
         spawnSparkle(f.x+f.size/2,f.y+f.size/2,10);
         popup(`+${f.def.kg}kg`, f.x, f.y-8);
         player.ateDuringAir = player.ateDuringAir || !player.onGround;
@@ -1105,31 +1102,34 @@
     const toilet=nearToilet(pr);
     if(toilet && V.p && player.poopCD<=0){
       const before=player.kg;
-      applyKg(player.kg*0.99);
+      setKgKeepCenter(player.kg*0.99);
+      resolvePenetration();
       player.poopCD=0.6;
       spawnSparkle(toilet.x+toilet.w/2, toilet.y+toilet.h/2, 14);
-      popup(`-1% (${(before-player.kg).toFixed(2)}kg)`, toilet.x-10, toilet.y-12, true);
+      popup(`-1%`, toilet.x-4, toilet.y-12, true);
       player.score += 2;
       sfx("poop");
     } else if(!toilet && V.p){
-      popup("TÌM 🚽 ĐÃ!", player.x+r-10, player.y-18);
+      popup("TÌM 🚽", player.x+r-10, player.y-18);
     }
 
     // clamp
-    player.x = clamp(player.x, 0, worldW-r*2);
-    player.y = clamp(player.y, 0, worldH-r*2);
+    const rr2=radius();
+    player.x = clamp(player.x, 0, worldW-rr2*2);
+    player.y = clamp(player.y, 0, worldH-rr2*2);
 
     // lose
     if(player.kg > LOSE_KG){ lose("VƯỢT 130KG"); return; }
 
     // win check
-    if(rects({x:player.x,y:player.y,w:r*2,h:r*2}, finish)){
-      if(player.kg <= TARGET_KG){
-        win();
-      } else {
-        showCenter(`CHƯA ĐỦ ỐM! CẦN ≤ ${TARGET_KG}KG`);
-      }
+    if(rects({x:player.x,y:player.y,w:rr2*2,h:rr2*2}, finish)){
+      if(player.kg <= TARGET_KG) win();
+      else showCenter(`CHƯA ĐỦ ỐM (≤ ${TARGET_KG}KG)`);
     }
+
+    // Update HUD text (no boxes)
+    scoreTextEl.textContent = String(Math.floor(player.score));
+    kgTextEl.textContent = `${player.kg.toFixed(2)}kg`;
   }
 
   /* ===== Background ===== */
@@ -1149,61 +1149,34 @@
       ctx.beginPath(); ctx.arc(x,y,2.2,0,Math.PI*2); ctx.fill();
     }
     ctx.restore();
-
-    ctx.save();
-    ctx.globalAlpha=0.22;
-    ctx.translate(- (cam.x*0.18)%420, 0);
-    for(let i=0;i<12;i++){
-      const x=i*140;
-      drawBuilding(x, H()*0.42, 110, 170+(i%4)*38, "#0b0f1f");
-    }
-    ctx.restore();
-
-    ctx.save();
-    ctx.globalAlpha=0.30;
-    ctx.translate(- (cam.x*0.32)%520, 0);
-    for(let i=0;i<10;i++){
-      const x=i*190;
-      drawBuilding(x, H()*0.50, 150, 210+(i%4)*40, "#120a2a");
-      drawNeonSign(x+24, H()*0.50+40, 80, 26, (Math.sin(t*3+i)*0.5+0.5));
-    }
-    ctx.restore();
-  }
-  function drawBuilding(x, baseY, w, h, color){
-    ctx.fillStyle=color;
-    rr(x, baseY, w, h, 18); ctx.fill();
-    ctx.fillStyle="rgba(30,255,214,0.18)";
-    for(let r=0;r<6;r++){
-      for(let c=0;c<3;c++){
-        const wx=x+18+c*30, wy=baseY+22+r*26;
-        rr(wx,wy,16,14,4); ctx.fill();
-      }
-    }
-  }
-  function drawNeonSign(x,y,w,h,blink){
-    const a=0.18+blink*0.22;
-    ctx.fillStyle=`rgba(30,255,214,${a})`;
-    rr(x,y,w,h,10); ctx.fill();
-    ctx.strokeStyle=`rgba(255,107,155,${a+0.10})`;
-    ctx.lineWidth=2;
-    rr(x+2,y+2,w-4,h-4,9); ctx.stroke();
   }
 
-  /* ===== Draw world ===== */
+  /* ===== Draw world with zoom (vòng tròn) ===== */
   function drawWorld(t){
     const r=radius();
     const cx=player.x+r, cy=player.y+r;
-    cam.x = clamp(cx - W()*0.45, 0, Math.max(0, worldW - W()));
-    cam.y = clamp(cy - H()*0.55, 0, Math.max(0, worldH - H()));
+
+    cam.x = clamp(cx - (W()/zoom)*0.45, 0, Math.max(0, worldW - (W()/zoom)));
+    cam.y = clamp(cy - (H()/zoom)*0.55, 0, Math.max(0, worldH - (H()/zoom)));
 
     ctx.save();
+
+    // zoom transform centered
+    ctx.translate(W()/2, H()/2);
+    ctx.scale(zoom, zoom);
+    ctx.translate(-W()/2, -H()/2);
+
+    ctx.translate(-cam.x*zoom + cam.x, -cam.y*zoom + cam.y); // stable-ish
     ctx.translate(-cam.x, -cam.y);
 
+    // blocks
     ctx.fillStyle="rgba(10,12,30,0.68)";
     for(const b of blocks) ctx.fillRect(b.x,b.y,b.w,b.h);
 
+    // toilets
     for(const tt of toilets) drawToiletIcon(tt.x, tt.y, tt.w, t);
 
+    // doors
     for(const d of doors){
       ctx.fillStyle = d.open ? "rgba(30,255,214,0.14)" : "rgba(30,255,214,0.28)";
       rr(d.x,d.y,d.w,d.h,14); ctx.fill();
@@ -1212,16 +1185,16 @@
       ctx.fillText(d.open ? "MỞ" : `≥${d.reqKg}KG`, d.x+10, d.y+24);
     }
 
+    // static foods
     for(const f of foodsStatic){
       if(!f.alive) continue;
       drawFoodIcon(f.def.id, f.x, f.y, 34);
-      ctx.fillStyle="rgba(0,0,0,0.35)";
-      rr(f.x, f.y-14, 46, 14, 6); ctx.fill();
-      ctx.fillStyle="#fff";
-      ctx.font="800 11px system-ui";
-      ctx.fillText(`${f.def.kg}kg`, f.x+6, f.y-3);
+      ctx.fillStyle="rgba(255,255,255,0.88)";
+      ctx.font="900 11px system-ui";
+      ctx.fillText(`${f.def.kg}kg`, f.x+4, f.y-3);
     }
 
+    // falling
     for(const f of falling){
       ctx.save();
       ctx.translate(f.x+f.size/2, f.y+f.size/2);
@@ -1230,10 +1203,13 @@
       ctx.restore();
     }
 
+    // finish door
     drawCasinoExitDoor(finish.x, finish.y, finish.w, finish.h, t);
 
+    // player
     drawPlayer(t);
 
+    // fx
     for(const p of particles){
       const k=1-p.t/p.life;
       if(p.kind==="spark"){
@@ -1249,7 +1225,6 @@
       }
       ctx.globalAlpha=1;
     }
-
     for(const pp of popups){
       const k=1-pp.t/pp.life;
       ctx.globalAlpha=0.92*k;
@@ -1261,170 +1236,124 @@
 
     ctx.restore();
 
+    // center message
     if(centerMsg.life>0){
       const a = 0.92 * Math.max(0, Math.min(1, (centerMsg.life-centerMsg.t)/0.35));
       const shake = centerMsg.shake>0 ? (Math.random()*2-1)*centerMsg.shake : 0;
 
       ctx.save();
       ctx.globalAlpha=a;
-      ctx.fillStyle="rgba(10,12,30,0.75)";
-      const bw=Math.min(560, W()-28), bh=76;
-      rr(W()/2-bw/2+shake, H()*0.35-bh/2, bw, bh, 18); ctx.fill();
-      ctx.strokeStyle="rgba(255,107,155,0.60)";
+      ctx.fillStyle="rgba(10,12,30,0.70)";
+      const bw=Math.min(520, W()-28), bh=66;
+      rr(W()/2-bw/2+shake, H()*0.32-bh/2, bw, bh, 18); ctx.fill();
+      ctx.strokeStyle="rgba(255,107,155,0.55)";
       ctx.lineWidth=2;
-      rr(W()/2-bw/2+shake+2, H()*0.35-bh/2+2, bw-4, bh-4, 16); ctx.stroke();
+      rr(W()/2-bw/2+shake+2, H()*0.32-bh/2+2, bw-4, bh-4, 16); ctx.stroke();
       ctx.fillStyle="#fff";
-      ctx.font="1000 18px system-ui";
+      ctx.font="1000 16px system-ui";
       ctx.textAlign="center";
-      ctx.fillText(centerMsg.text, W()/2+shake, H()*0.35+7);
+      ctx.fillText(centerMsg.text, W()/2+shake, H()*0.32+6);
       ctx.textAlign="left";
       ctx.restore();
     }
   }
 
-  /* ===== Player: cục tròn cute + méo nhẹ + nơ hoa bên phải + tay rũ + chuyển động ===== */
+  /* ===== Player: arms tiny out to sides + flower smaller ===== */
   function drawPlayer(t){
     const r=radius();
 
-    const breathe = Math.sin(t*2.6)*2.2;
-    const runBounce = player.onGround ? Math.sin(player.runT*10)*3 : 0;
-    const sway = player.onGround ? Math.sin(player.runT*6)*0.10 : Math.sin(t*2.2)*0.06;
+    const breathe = Math.sin(t*2.6)*1.6;
+    const runBounce = player.onGround ? Math.sin(player.runT*10)*2.4 : 0;
+    const sway = player.onGround ? Math.sin(player.runT*6)*0.08 : Math.sin(t*2.2)*0.05;
 
     ctx.save();
     ctx.translate(player.x+r, player.y+r+runBounce);
 
-    ctx.globalAlpha=0.22;
+    // shadow
+    ctx.globalAlpha=0.20;
     ctx.fillStyle="#000";
     ctx.beginPath();
-    ctx.ellipse(0, r+18, r*0.95, r*0.28, 0, 0, Math.PI*2);
+    ctx.ellipse(0, r+16, r*0.90, r*0.26, 0, 0, Math.PI*2);
     ctx.fill();
     ctx.globalAlpha=1;
 
+    // body (slightly squashed)
     ctx.save();
     ctx.rotate(sway);
-    const sx = 1.08, sy = 0.92;
-    ctx.scale(sx, sy);
+    ctx.scale(1.06, 0.94);
 
     ctx.fillStyle=player.skin.base;
     ctx.beginPath(); ctx.arc(0, breathe*0.2, r, 0, Math.PI*2); ctx.fill();
 
-    ctx.fillStyle="rgba(255,255,255,0.16)";
-    ctx.beginPath(); ctx.ellipse(-r*0.28, -r*0.28, r*0.38, r*0.26, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle="rgba(255,255,255,0.14)";
+    ctx.beginPath(); ctx.ellipse(-r*0.28, -r*0.28, r*0.36, r*0.24, 0, 0, Math.PI*2); ctx.fill();
 
+    // hair
     ctx.fillStyle=player.skin.hair;
-    rr(-r*0.78, -r*0.98, r*1.56, r*0.52, r*0.22); ctx.fill();
+    rr(-r*0.76, -r*0.96, r*1.52, r*0.50, r*0.22); ctx.fill();
 
-    ctx.fillStyle="rgba(255,107,155,0.35)";
-    ctx.beginPath(); ctx.arc(-r*0.44, r*0.12, r*0.16, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc( r*0.44, r*0.12, r*0.16, 0, Math.PI*2); ctx.fill();
+    // cheeks
+    ctx.fillStyle="rgba(255,107,155,0.30)";
+    ctx.beginPath(); ctx.arc(-r*0.44, r*0.10, r*0.14, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc( r*0.44, r*0.10, r*0.14, 0, Math.PI*2); ctx.fill();
 
+    // eyes
     player.blinkT -= 1/60;
     if(player.blinkT<=0 && Math.random()<0.01) player.blinkT=0.12;
     const blink = player.blinkT>0;
 
     if(blink){
       ctx.strokeStyle="#0b0f1f";
-      ctx.lineWidth=Math.max(2, r*0.10);
+      ctx.lineWidth=Math.max(2, r*0.09);
       ctx.beginPath();
-      ctx.moveTo(-r*0.36, -r*0.12); ctx.lineTo(-r*0.18, -r*0.12);
-      ctx.moveTo( r*0.18, -r*0.12); ctx.lineTo( r*0.36, -r*0.12);
+      ctx.moveTo(-r*0.34, -r*0.12); ctx.lineTo(-r*0.18, -r*0.12);
+      ctx.moveTo( r*0.18, -r*0.12); ctx.lineTo( r*0.34, -r*0.12);
       ctx.stroke();
     }else{
       ctx.fillStyle="#0b0f1f";
-      ctx.beginPath(); ctx.arc(-r*0.26, -r*0.16, r*0.10, 0, Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.arc( r*0.26, -r*0.16, r*0.10, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(-r*0.24, -r*0.16, r*0.09, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc( r*0.24, -r*0.16, r*0.09, 0, Math.PI*2); ctx.fill();
       ctx.fillStyle="rgba(255,255,255,0.9)";
-      ctx.beginPath(); ctx.arc(-r*0.22, -r*0.20, r*0.04, 0, Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.arc( r*0.22, -r*0.20, r*0.04, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(-r*0.20, -r*0.20, r*0.035, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc( r*0.20, -r*0.20, r*0.035, 0, Math.PI*2); ctx.fill();
     }
 
+    // smile
     ctx.strokeStyle="#7a3f2b";
-    ctx.lineWidth=Math.max(2, r*0.08);
+    ctx.lineWidth=Math.max(2, r*0.07);
     ctx.beginPath();
-    ctx.arc(0, r*0.16, r*0.18, 0, Math.PI);
+    ctx.arc(0, r*0.16, r*0.16, 0, Math.PI);
     ctx.stroke();
 
-    ctx.restore(); // end body warp
+    ctx.restore(); // end body
 
-    // tay rũ xuống + có chuyển động
-    const armSwing = player.onGround ? Math.sin(player.runT*10)*0.25 : Math.sin(t*3.0)*0.10;
+    // tiny arms: chỉ nhú ra 2 bên
     ctx.save();
     ctx.rotate(sway);
-
-    ctx.strokeStyle="rgba(255,224,194,0.92)";
-    ctx.lineWidth=Math.max(3, r*0.12);
-    ctx.lineCap="round";
-
-    ctx.beginPath();
-    ctx.moveTo(-r*0.70, r*0.28);
-    ctx.quadraticCurveTo(-r*0.92, r*0.62, -r*0.70, r*0.98 + armSwing*8);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(r*0.70, r*0.28);
-    ctx.quadraticCurveTo(r*0.92, r*0.62, r*0.70, r*0.98 - armSwing*8);
-    ctx.stroke();
-
+    ctx.fillStyle="rgba(255,224,194,0.92)";
+    const aw = Math.max(4, r*0.22);
+    const ah = Math.max(8, r*0.38);
+    rr(-r-3, r*0.10, aw, ah, 6); ctx.fill();   // left tiny arm
+    rr(r-aw+3, r*0.10, aw, ah, 6); ctx.fill(); // right tiny arm
     ctx.restore();
 
-    // nơ hoa bên phải
+    // flower smaller (right side)
     ctx.save();
-    ctx.translate(r*0.72, -r*0.62);
-    ctx.rotate(-0.25);
-
-    ctx.globalAlpha=0.95;
+    ctx.translate(r*0.70, -r*0.62);
+    ctx.rotate(-0.20);
+    ctx.globalAlpha=0.92;
     ctx.fillStyle="rgba(255,107,155,0.95)";
     for(let i=0;i<5;i++){
       const ang = i*(Math.PI*2/5);
       ctx.beginPath();
-      ctx.ellipse(Math.cos(ang)*6, Math.sin(ang)*6, 6, 3.8, ang, 0, Math.PI*2);
+      ctx.ellipse(Math.cos(ang)*4.8, Math.sin(ang)*4.8, 4.6, 3.0, ang, 0, Math.PI*2);
       ctx.fill();
     }
     ctx.fillStyle="rgba(255,255,255,0.92)";
-    ctx.beginPath(); ctx.arc(0,0,3.2,0,Math.PI*2); ctx.fill();
-
-    ctx.fillStyle="rgba(30,255,214,0.80)";
-    ctx.beginPath();
-    ctx.moveTo(-4,6); ctx.lineTo(-14,18); ctx.lineTo(-2,14); ctx.closePath(); ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(4,6); ctx.lineTo(14,18); ctx.lineTo(2,14); ctx.closePath(); ctx.fill();
-
+    ctx.beginPath(); ctx.arc(0,0,2.6,0,Math.PI*2); ctx.fill();
     ctx.restore();
 
     ctx.restore();
-  }
-
-  /* ===== HUD: SCORE box + KG box (không đè lên nhân vật) ===== */
-  function drawHUD(){
-    // SCORE (trái)
-    ctx.fillStyle="rgba(30,255,214,0.14)";
-    rr(12,12,220,56,16); ctx.fill();
-    ctx.strokeStyle="rgba(255,107,155,0.28)";
-    ctx.lineWidth=2;
-    rr(14,14,216,52,15); ctx.stroke();
-
-    ctx.fillStyle="#fff";
-    ctx.font="1000 14px system-ui";
-    ctx.fillText(`SCORE: ${Math.floor(player.score)}`, 26, 36);
-    ctx.font="850 12px system-ui";
-    ctx.fillStyle="rgba(255,255,255,0.88)";
-    ctx.fillText(`Thắng khi ≤${TARGET_KG}kg`, 26, 54);
-
-    // KG (kề bên)
-    const x2 = 12+220+10;
-    ctx.fillStyle="rgba(255,107,155,0.14)";
-    rr(x2,12,190,56,16); ctx.fill();
-    ctx.strokeStyle="rgba(30,255,214,0.30)";
-    ctx.lineWidth=2;
-    rr(x2+2,14,186,52,15); ctx.stroke();
-
-    ctx.fillStyle="#fff";
-    ctx.font="1000 14px system-ui";
-    ctx.fillText(`KG: ${player.kg.toFixed(2)}`, x2+14, 36);
-
-    ctx.font="850 12px system-ui";
-    ctx.fillStyle="rgba(255,255,255,0.88)";
-    ctx.fillText(player.kg>LOSE_KG?`THUA: >${LOSE_KG}kg`:`Nhẹ hơn = nhảy cao`, x2+14, 54);
   }
 
   /* ===== Loop ===== */
@@ -1461,18 +1390,10 @@
     ctx.clearRect(0,0,W(),H());
     drawBG(t);
 
-    if(mode==="play" || mode==="welcome"){
-      // nếu đang welcome thì chỉ vẽ nền thôi, không vẽ map/hud để nhẹ và sạch
-      if(mode==="play"){
-        drawWorld(t);
-        drawHUD();
-      }
-    }
+    if(mode==="play") drawWorld(t);
 
     requestAnimationFrame(loop);
   }
-
-  /* ===== Start loop ===== */
   requestAnimationFrame(loop);
 
 })();
