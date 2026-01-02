@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport"
       content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,viewport-fit=cover"/>
-<title>BÀ ĐỤT – Upgrade v4 (Welcome + Tutorial + Compact UI + KG Ring + Fix Position + Cute Bow)</title>
+<title>BÀ ĐỤT – Upgrade v4 (Welcome + Ingame Guide + Buttons Fix + HUD Score/KG + Player Cute Bow + No Position Jump)</title>
 <style>
   html,body{
     margin:0;height:100%;
@@ -30,89 +30,65 @@
     --safeL: env(safe-area-inset-left);
   }
 
-  /* HUD */
-  #hud{ position:fixed; inset:0; pointer-events:none; touch-action:none; display:none; }
+  /* ===== HUD wrapper ===== */
+  #hud{ position:fixed; inset:0; pointer-events:none; touch-action:none; }
+
+  /* ===== Buttons base ===== */
   .btn{
     position:absolute;
     pointer-events:auto;
     display:grid; place-items:center;
-    font-weight:1000; color:#fff;
+    font-weight:950; color:#fff;
     border-radius:18px;
-    background:rgba(30,255,214,0.16);
-    border:1px solid rgba(30,255,214,0.42);
-    border-bottom:2px solid rgba(255,107,155,0.30);
+    background:rgba(30,255,214,0.18);
+    border:1px solid rgba(30,255,214,0.45);
+    border-bottom:2px solid rgba(255,107,155,0.35);
     backdrop-filter:blur(10px) saturate(140%);
     -webkit-backdrop-filter:blur(10px) saturate(140%);
     box-shadow:0 10px 28px rgba(0,0,0,.22);
     touch-action:none;
     user-select:none;
   }
-  .btn:active{ background:rgba(255,107,155,0.22); transform:scale(.98); }
+  .btn:active{ background:rgba(255,107,155,0.25); transform:scale(.98); }
 
-  /* Compact controls */
-  #pad{
+  /* ===== HUD layout: chống đè nút + gọn đáy màn hình ===== */
+  .pad{
     position:absolute;
-    left:calc(14px + var(--safeL));
-    bottom:calc(14px + var(--safeB));
-    width:168px; height:86px;
-    pointer-events:none;
+    bottom:calc(12px + var(--safeB));
+    display:flex;
+    gap:10px;
+    pointer-events:auto;
   }
-  #left,#right{
-    width:80px;height:80px;
-    bottom:0;
-    font-size:24px;
-    border-radius:22px;
+  #padLeft{ left:calc(12px + var(--safeL)); }
+  #padRight{
+    right:calc(12px + var(--safeR));
+    flex-direction:column;
+    align-items:flex-end;
   }
-  #left { left:0; }
-  #right{ left:88px; }
 
-  #actions{
-    position:absolute;
-    right:calc(14px + var(--safeR));
-    bottom:calc(14px + var(--safeB));
-    width:214px; height:164px;
-    pointer-events:none;
-  }
-  #jump{
-    width:96px;height:96px;
-    right:0; bottom:0;
-    font-size:14px;
-    letter-spacing:0.4px;
-    border-radius:26px;
-  }
-  #fart{
-    width:104px;height:70px;
-    right:110px; bottom:0;
-    font-size:14px;
-    border-radius:22px;
-  }
-  #poop{
-    width:104px;height:70px;
-    right:110px; bottom:82px;
-    font-size:14px;
-    border-radius:22px;
-  }
-  #poop svg{ width:26px; height:26px; }
+  /* kích thước nút mới (nhỏ lại) */
+  .btn.small{ width:58px; height:58px; font-size:22px; border-radius:16px; position:static; }
+  .btn.mid  { width:96px; height:54px; font-size:14px; border-radius:16px; position:static; }
+  .btn.big  { width:96px; height:76px; font-size:13px; letter-spacing:0.5px; border-radius:18px; position:static; }
+  .btn.tiny { width:52px; height:40px; font-size:13px; border-radius:14px; }
+
   #reset{
-    width:56px;height:42px;
     top:calc(12px + var(--safeT));
     right:calc(12px + var(--safeR));
-    font-size:14px;
-    border-radius:14px;
-    opacity:0.95;
+    bottom:auto;
   }
 
-  /* Overlays */
-  .overlay{
+  /* ===== Welcome overlay ===== */
+  #welcome{
     position:fixed; inset:0;
     display:flex;
     justify-content:center;
     align-items:center;
     padding:calc(14px + var(--safeT)) calc(14px + var(--safeR)) calc(14px + var(--safeB)) calc(14px + var(--safeL));
-    background:radial-gradient(1200px 700px at 50% 30%, rgba(30,255,214,0.20), rgba(0,0,0,0.80) 60%);
+    background:radial-gradient(1200px 700px at 50% 30%, rgba(30,255,214,0.24), rgba(0,0,0,0.78) 58%);
     color:#fff;
   }
-  .card{
+  #welcomeCard{
     width:min(680px, 96vw);
     border-radius:22px;
     padding:16px 14px;
@@ -122,37 +98,30 @@
     backdrop-filter:blur(12px) saturate(150%);
     -webkit-backdrop-filter:blur(12px) saturate(150%);
   }
-  .topRow{ display:flex; align-items:center; gap:12px; margin-bottom:10px; }
-  .mascot{
-    width:64px; height:64px; border-radius:20px;
-    background:linear-gradient(135deg, rgba(255,107,155,0.24), rgba(30,255,214,0.18));
+  #welcomeTop{
+    display:flex; align-items:center; gap:12px; margin-bottom:10px;
+  }
+  #mascot{
+    width:62px; height:62px; border-radius:20px;
+    background:linear-gradient(135deg, rgba(255,107,155,0.26), rgba(30,255,214,0.20));
     border:1px solid rgba(255,255,255,0.14);
     box-shadow:0 12px 26px rgba(0,0,0,0.25);
     display:grid; place-items:center;
   }
-  .title{
+  #welcomeTitle{
     font-weight:1000;
     font-size:20px;
     margin:0;
     letter-spacing:0.3px;
   }
-  .sub{
+  #welcomeSub{
     margin:6px 0 12px;
     opacity:0.92;
     font-weight:850;
     line-height:1.35;
     font-size:13px;
   }
-  .chipRow{ display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 12px; }
-  .chip{
-    padding:8px 10px;
-    border-radius:14px;
-    border:1px solid rgba(255,255,255,0.14);
-    background:rgba(255,255,255,0.06);
-    font-weight:900;
-    font-size:12px;
-  }
-  .cta{
+  #playBtn{
     margin-top:10px;
     text-align:center;
     font-weight:1000;
@@ -161,11 +130,39 @@
     border-radius:16px;
     border:1px solid rgba(30,255,214,0.60);
     background:rgba(30,255,214,0.20);
-    user-select:none;
+    pointer-events:auto;
   }
-  .hint{ opacity:0.85; font-weight:850; font-size:12px; margin-top:8px; text-align:center; }
+  #playBtn:active{ background:rgba(255,107,155,0.25); transform:scale(.99); }
+  #welcomeHint{ opacity:0.85; font-weight:850; font-size:12px; margin-top:8px; text-align:center; }
 
-  /* End overlay */
+  /* ===== In-game guide toast ===== */
+  #guideToast{
+    position:fixed;
+    left:calc(12px + var(--safeL));
+    right:calc(12px + var(--safeR));
+    top:calc(86px + var(--safeT));
+    display:none;
+    pointer-events:none;
+    z-index:9;
+  }
+  #guideToastInner{
+    max-width:720px;
+    margin:0 auto;
+    border-radius:18px;
+    padding:12px 12px;
+    background:rgba(10,12,30,0.68);
+    border:1px solid rgba(255,107,155,0.40);
+    backdrop-filter:blur(10px) saturate(140%);
+    -webkit-backdrop-filter:blur(10px) saturate(140%);
+    box-shadow:0 14px 38px rgba(0,0,0,0.35);
+    color:#fff;
+    font-weight:900;
+    font-size:13px;
+    line-height:1.35;
+  }
+  #guideToastInner b{ color:rgba(30,255,214,0.95); }
+
+  /* ===== End overlay ===== */
   #end{
     position:fixed; inset:0;
     display:none;
@@ -215,35 +212,26 @@
 <body>
 <canvas id="c"></canvas>
 
-<div id="hud">
-  <div id="pad">
-    <div id="left"  class="btn">←</div>
-    <div id="right" class="btn">→</div>
+<div id="hud" style="display:none;">
+  <div id="padLeft" class="pad">
+    <div id="left"  class="btn small">←</div>
+    <div id="right" class="btn small">→</div>
   </div>
 
-  <div id="actions">
-    <div id="poop" class="btn" style="display:flex; flex-direction:column; gap:4px;">
-      <!-- toilet icon only -->
-      <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
-        <path d="M22 14h22c2 0 4 2 4 4v10H18V18c0-2 2-4 4-4z" fill="rgba(255,255,255,0.92)"/>
-        <path d="M18 28h34v14c0 10-8 18-18 18H18V28z" fill="rgba(255,255,255,0.92)"/>
-        <path d="M26 36h18v10c0 4-3 7-7 7h-4c-4 0-7-3-7-7V36z" fill="rgba(10,12,30,0.12)"/>
-      </svg>
-      <div style="font-weight:1000; font-size:12px;">WC</div>
-    </div>
-    <div id="fart" class="btn">Bủm 💨</div>
-    <div id="jump" class="btn">JUMP</div>
+  <div id="padRight" class="pad">
+    <div id="jump"  class="btn big">JUMP</div>
+    <div id="fart"  class="btn mid">Bủm xì</div>
+    <div id="poop"  class="btn mid">🚽</div>
   </div>
 
-  <div id="reset" class="btn">R</div>
+  <div id="reset" class="btn tiny">R</div>
 </div>
 
-<!-- Welcome -->
-<div id="welcome" class="overlay">
-  <div class="card">
-    <div class="topRow">
-      <div class="mascot">
-        <svg width="46" height="46" viewBox="0 0 44 44" fill="none">
+<div id="welcome">
+  <div id="welcomeCard">
+    <div id="welcomeTop">
+      <div id="mascot">
+        <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
           <circle cx="22" cy="22" r="18" fill="rgba(255,224,194,0.92)"/>
           <path d="M10 18 C 14 9, 30 9, 34 18" fill="rgba(43,26,59,0.95)"/>
           <circle cx="16.5" cy="21" r="2.6" fill="#0b0f1f"/>
@@ -254,50 +242,27 @@
         </svg>
       </div>
       <div style="flex:1">
-        <div class="title">BÀ ĐỤT – Ăn Vặt & Giảm Cân 🎰✨</div>
-        <div class="sub">Welcome! Bấm <b>CHƠI</b> để bắt đầu (sẽ bật nhạc & âm thanh).</div>
-      </div>
-    </div>
-
-    <div class="chipRow">
-      <div class="chip">Mục tiêu: chạm ĐÍCH khi ≤ 60kg</div>
-      <div class="chip">>130kg: thua ngay</div>
-      <div class="chip">Né đồ ăn rơi: + điểm & giúp giảm cân</div>
-    </div>
-
-    <div id="btnPlay" class="cta">CHƠI</div>
-    <div class="hint">Tip: Giảm cân → thon hơn → nhảy cao hơn.</div>
-  </div>
-</div>
-
-<!-- Tutorial (inside game) -->
-<div id="tutorial" class="overlay" style="display:none;">
-  <div class="card">
-    <div class="topRow">
-      <div class="mascot">
-        <div style="font-weight:1000; font-size:22px;">📌</div>
-      </div>
-      <div style="flex:1">
-        <div class="title">HƯỚNG DẪN NHANH</div>
-        <div class="sub" style="margin-bottom:0;">
-          Giảm cân để qua màn. Muốn thắng: <b>chạm ĐÍCH khi ≤60kg</b>.
+        <div id="welcomeTitle">BÀ ĐỤT – Ăn Vặt & Giảm Cân 🎰✨</div>
+        <div id="welcomeSub">
+          Chơi vui kiểu “né đồ ăn rơi” để <b>giảm cân qua màn</b>.<br/>
+          Chạm <b>ĐÍCH</b> khi ≤60kg để thắng. >130kg là thua!
         </div>
       </div>
     </div>
 
-    <div class="chipRow">
-      <div class="chip">1) Né đồ ăn rơi → giúp giảm cân & + điểm</div>
-      <div class="chip">2) Bủm 💨 → giảm cân ít</div>
-      <div class="chip">3) WC → giảm cân nhiều (đứng gần bồn cầu)</div>
-      <div class="chip">Giảm cân → thon gọn hơn → nhảy cao hơn</div>
-    </div>
-
-    <div id="btnStart" class="cta">BẮT ĐẦU</div>
-    <div class="hint">Nút điều khiển đã gọn lại dưới màn hình.</div>
+    <div id="playBtn">BẤM ĐỂ CHƠI (bật nhạc & âm thanh)</div>
+    <div id="welcomeHint">Tip: Giảm cân thì thon hơn & nhảy cao hơn.</div>
   </div>
 </div>
 
-<!-- End -->
+<div id="guideToast">
+  <div id="guideToastInner">
+    <b>HƯỚNG DẪN</b><br/>
+    1) Né đồ ăn rơi để lấy điểm & giảm áp lực tăng cân.<br/>
+    2) <b>Bủm xì</b> giảm ít • 3) <b>🚽</b> giảm nhiều (đứng gần bồn cầu).
+  </div>
+</div>
+
 <div id="end">
   <div id="endCard">
     <div id="endTitle">Kết quả</div>
@@ -509,6 +474,7 @@
   /* ===== UI Buttons ===== */
   const hudEl = document.getElementById("hud");
   const V = {l:false,r:false,j:false,f:false,p:false, reset:false};
+
   function bindHold(id, key){
     const el=document.getElementById(id);
     const on = (e)=>{ e.preventDefault(); unlockAudio(); V[key]=true; };
@@ -531,26 +497,29 @@
   resetBtn.addEventListener("touchstart",(e)=>{e.preventDefault(); unlockAudio(); V.reset=true;},{passive:false});
   resetBtn.addEventListener("pointerdown",(e)=>{e.preventDefault(); unlockAudio(); V.reset=true;},{passive:false});
 
-  /* ===== Welcome + Tutorial flow ===== */
+  /* ===== Welcome ===== */
   const welcomeEl = document.getElementById("welcome");
-  const tutorialEl = document.getElementById("tutorial");
-  const btnPlay = document.getElementById("btnPlay");
-  const btnStart = document.getElementById("btnStart");
+  const playBtn = document.getElementById("playBtn");
+  const guideToast = document.getElementById("guideToast");
 
-  function showTutorial(){
-    welcomeEl.style.display="none";
-    tutorialEl.style.display="flex";
+  function showGuideToast(){
+    guideToast.style.display="block";
+    setTimeout(()=>{ guideToast.style.display="none"; }, 5200);
   }
-  function startGame(){
-    tutorialEl.style.display="none";
+
+  function startGameFromWelcome(e){
+    e.preventDefault();
+    unlockAudio();
+    sfx("ui");
+    welcomeEl.style.display="none";
     hudEl.style.display="block";
     mode="play";
     reset();
+    showGuideToast();
   }
-  btnPlay.addEventListener("touchstart",(e)=>{ e.preventDefault(); unlockAudio(); sfx("ui"); showTutorial(); }, {passive:false});
-  btnPlay.addEventListener("pointerdown",(e)=>{ e.preventDefault(); unlockAudio(); sfx("ui"); showTutorial(); }, {passive:false});
-  btnStart.addEventListener("touchstart",(e)=>{ e.preventDefault(); unlockAudio(); sfx("ui"); startGame(); }, {passive:false});
-  btnStart.addEventListener("pointerdown",(e)=>{ e.preventDefault(); unlockAudio(); sfx("ui"); startGame(); }, {passive:false});
+  playBtn.addEventListener("click", startGameFromWelcome);
+  playBtn.addEventListener("touchstart", startGameFromWelcome, {passive:false});
+  playBtn.addEventListener("pointerdown", startGameFromWelcome, {passive:false});
 
   /* ===== Ranking ===== */
   const endEl = document.getElementById("end");
@@ -603,8 +572,8 @@
   }
   function hideEnd(){ endEl.style.display="none"; }
 
-  againBtn.addEventListener("click",(e)=>{ e.preventDefault(); unlockAudio(); sfx("ui"); hideEnd(); mode="play"; reset(); startBGM(); });
-  againBtn.addEventListener("touchstart",(e)=>{ e.preventDefault(); unlockAudio(); sfx("ui"); hideEnd(); mode="play"; reset(); startBGM(); }, {passive:false});
+  againBtn.addEventListener("click",(e)=>{ e.preventDefault(); unlockAudio(); sfx("ui"); hideEnd(); mode="play"; reset(); startBGM(); showGuideToast(); });
+  againBtn.addEventListener("touchstart",(e)=>{ e.preventDefault(); unlockAudio(); sfx("ui"); hideEnd(); mode="play"; reset(); startBGM(); showGuideToast(); }, {passive:false});
 
   clearBtn.addEventListener("click",(e)=>{ e.preventDefault(); unlockAudio(); sfx("ui"); saveRanking([]); setBest(0); renderRanking(); });
   clearBtn.addEventListener("touchstart",(e)=>{ e.preventDefault(); unlockAudio(); sfx("ui"); saveRanking([]); setBest(0); renderRanking(); }, {passive:false});
@@ -667,7 +636,7 @@
     ctx.restore();
   }
 
-  /* ===== Toilet icon in world ===== */
+  /* ===== Toilet icon ONLY ===== */
   function drawToiletIcon(x,y,s, t){
     ctx.save();
     ctx.translate(x,y);
@@ -697,7 +666,7 @@
     ctx.restore();
   }
 
-  /* ===== Casino-style Exit door ===== */
+  /* ===== Casino-style Exit Door ===== */
   function drawCasinoExitDoor(x,y,w,h,t){
     const blink = (Math.sin(t*6.0)*0.5+0.5);
     ctx.save();
@@ -882,9 +851,8 @@
     ateDuringAir:false
   };
   const cam={x:0,y:0};
-  let mode="welcome"; // welcome -> tutorial -> play -> end
+  let mode="welcome";
 
-  // center message
   const centerMsg = {text:"", t:0, life:0, shake:0};
   function showCenter(text){
     centerMsg.text=text;
@@ -898,37 +866,20 @@
   function radius(){ const t=kgT(); return 18 + t*18; }
   function jumpPower(){ const t=kgT(); return 820 - t*320; }
 
-  function safeResolveAfterResize(){
-    // nhẹ nhàng chống kẹt khi thay radius
-    const r=radius();
-    player.x = clamp(player.x, 0, worldW-r*2);
-    player.y = clamp(player.y, 0, worldH-r*2);
-  }
-
-  // FIX: giữ nguyên tâm nhân vật khi KG đổi (đỡ bị “dịch vị trí đứng”)
-  function applyKgDelta(delta){
+  /* ===== IMPORTANT: Fix “đổi kg bị dịch vị trí” ===== */
+  function applyKg(newKg){
     const oldR = radius();
     const cx = player.x + oldR;
     const cy = player.y + oldR;
 
-    player.kg = clamp(player.kg + delta, KG_MIN, KG_MAX);
+    player.kg = clamp(newKg, KG_MIN, KG_MAX);
 
     const newR = radius();
     player.x = cx - newR;
     player.y = cy - newR;
 
-    // clamp vào world
     player.x = clamp(player.x, 0, worldW-newR*2);
     player.y = clamp(player.y, 0, worldH-newR*2);
-
-    // chống “lụt tường” cơ bản nếu radius tăng chạm block
-    let pr={x:player.x,y:player.y,w:newR*2,h:newR*2};
-    for(const b of blocks){
-      if(!rects(pr,b)) continue;
-      // đẩy lên trên là ưu tiên (thường nhất)
-      player.y = b.y - pr.h - 1;
-      pr.y = player.y;
-    }
   }
 
   function reset(){
@@ -945,7 +896,10 @@
     falling.length=0; particles.length=0; popups.length=0; confetti.length=0;
     for(const d of doors) d.open=false;
 
-    safeResolveAfterResize();
+    const r=radius();
+    player.x = clamp(player.x, 0, worldW-r*2);
+    player.y = clamp(player.y, 0, worldH-r*2);
+
     popup("BÀ ĐỤT XUẤT PHÁT!", player.x, player.y-24, true);
   }
 
@@ -1022,8 +976,6 @@
           f.dodged=true;
           player.score += 3;
           popup("+DODGE", fx-16, f.y-10);
-          // “né đồ ăn rơi giúp giảm cân”: giảm nhẹ khi né thành công
-          applyKgDelta(-0.06);
         }
       }
       if(f.y > cam.y + H() + 320){
@@ -1060,8 +1012,7 @@
 
     if(V.f && player.fartCD<=0){
       const before=player.kg;
-      // bủm xì giảm ít
-      applyKgDelta(-(before*0.001)); // tương đương *0.999 nhưng fix neo tâm
+      applyKg(player.kg*0.999);
       player.fartCD=0.12;
       if(before-player.kg>0){
         const r=radius();
@@ -1077,7 +1028,6 @@
     const r=radius();
     let pr={x:player.x,y:player.y,w:r*2,h:r*2};
 
-    // doors open logic
     for(const d of doors){
       const near=rects(pr,{x:d.x-16,y:d.y-16,w:d.w+32,h:d.h+32});
       d.open = near && player.kg >= d.reqKg;
@@ -1130,7 +1080,7 @@
       if(!f.alive) continue;
       if(rects(pr,f)){
         f.alive=false;
-        applyKgDelta(f.def.kg); // FIX neo tâm khi tăng KG
+        applyKg(player.kg + f.def.kg);
         spawnSparkle(f.x+14,f.y+14,10);
         popup(`+${f.def.kg}kg`, f.x, f.y-8);
         player.ateDuringAir = player.ateDuringAir || !player.onGround;
@@ -1142,7 +1092,7 @@
     for(let i=falling.length-1;i>=0;i--){
       const f=falling[i];
       if(rects(pr,{x:f.x,y:f.y,w:f.size,h:f.size})){
-        applyKgDelta(f.def.kg); // FIX neo tâm khi tăng KG
+        applyKg(player.kg + f.def.kg);
         spawnSparkle(f.x+f.size/2,f.y+f.size/2,10);
         popup(`+${f.def.kg}kg`, f.x, f.y-8);
         player.ateDuringAir = player.ateDuringAir || !player.onGround;
@@ -1155,15 +1105,14 @@
     const toilet=nearToilet(pr);
     if(toilet && V.p && player.poopCD<=0){
       const before=player.kg;
-      // WC giảm nhiều (1%)
-      applyKgDelta(-(before*0.01));
+      applyKg(player.kg*0.99);
       player.poopCD=0.6;
       spawnSparkle(toilet.x+toilet.w/2, toilet.y+toilet.h/2, 14);
-      popup(`-1%`, toilet.x-10, toilet.y-12, true);
+      popup(`-1% (${(before-player.kg).toFixed(2)}kg)`, toilet.x-10, toilet.y-12, true);
       player.score += 2;
       sfx("poop");
     } else if(!toilet && V.p){
-      popup("TÌM WC ĐÃ!", player.x+r-10, player.y-18);
+      popup("TÌM 🚽 ĐÃ!", player.x+r-10, player.y-18);
     }
 
     // clamp
@@ -1333,47 +1282,17 @@
     }
   }
 
-  /* ===== Player draw (cute + bow + tiny arms + KG ring) ===== */
+  /* ===== Player: cục tròn cute + méo nhẹ + nơ hoa bên phải + tay rũ + chuyển động ===== */
   function drawPlayer(t){
     const r=radius();
+
+    const breathe = Math.sin(t*2.6)*2.2;
     const runBounce = player.onGround ? Math.sin(player.runT*10)*3 : 0;
-    const squish = player.onGround ? (Math.abs(player.vx)>40 ? 0.06 : 0.02) : 0.00;
-    const sx=1+squish, sy=1-squish;
+    const sway = player.onGround ? Math.sin(player.runT*6)*0.10 : Math.sin(t*2.2)*0.06;
 
-    const cx = player.x + r;
-    const cy = player.y + r + runBounce;
-
-    // KG ring (outline) + KG text near character
-    const kgPct = clamp((player.kg - 40) / (130 - 40), 0, 1);
     ctx.save();
-    ctx.translate(cx, cy);
-    ctx.globalAlpha = 0.55;
-    ctx.strokeStyle = "rgba(255,255,255,0.14)";
-    ctx.lineWidth = 6;
-    ctx.beginPath(); ctx.arc(0,0,r+10,0,Math.PI*2); ctx.stroke();
+    ctx.translate(player.x+r, player.y+r+runBounce);
 
-    ctx.globalAlpha = 0.90;
-    ctx.strokeStyle = kgPct < 0.35 ? "rgba(30,255,214,0.95)" : (kgPct < 0.72 ? "rgba(255,255,255,0.92)" : "rgba(255,107,155,0.95)");
-    ctx.lineWidth = 6;
-    ctx.beginPath();
-    ctx.arc(0,0,r+10,-Math.PI/2, -Math.PI/2 + Math.PI*2*kgPct);
-    ctx.stroke();
-
-    // small kg label next to ring
-    ctx.globalAlpha = 0.95;
-    ctx.fillStyle = "rgba(10,12,30,0.65)";
-    rr(r+14, -14, 74, 28, 12); ctx.fill();
-    ctx.fillStyle="#fff";
-    ctx.font="1000 12px system-ui";
-    ctx.fillText(`${player.kg.toFixed(1)}kg`, r+24, 5);
-    ctx.restore();
-
-    // character
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.scale(sx, sy);
-
-    // shadow
     ctx.globalAlpha=0.22;
     ctx.fillStyle="#000";
     ctx.beginPath();
@@ -1381,48 +1300,24 @@
     ctx.fill();
     ctx.globalAlpha=1;
 
-    // body base + outline
-    ctx.fillStyle=player.skin.base;
-    ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fill();
-    ctx.strokeStyle="rgba(255,255,255,0.18)";
-    ctx.lineWidth=Math.max(2, r*0.08);
-    ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.stroke();
-
-    // hair
-    ctx.fillStyle=player.skin.hair;
-    rr(-r*0.70, -r*0.95, r*1.40, r*0.48, r*0.22); ctx.fill();
-    ctx.fillStyle="rgba(255,255,255,0.18)";
-    rr(-r*0.35, -r*0.85, r*0.35, r*0.18, r*0.10); ctx.fill();
-
-    // BOW (nơ) trên đầu
     ctx.save();
-    ctx.translate(0, -r*0.92);
-    ctx.rotate(Math.sin(t*2.0)*0.05);
-    ctx.globalAlpha=0.92;
-    ctx.fillStyle="rgba(255,107,155,0.92)";
-    // left wing
-    ctx.beginPath();
-    ctx.moveTo(-6, 6);
-    ctx.quadraticCurveTo(-28, -2, -18, -16);
-    ctx.quadraticCurveTo(-2, -12, -6, 6);
-    ctx.fill();
-    // right wing
-    ctx.beginPath();
-    ctx.moveTo(6, 6);
-    ctx.quadraticCurveTo(28, -2, 18, -16);
-    ctx.quadraticCurveTo(2, -12, 6, 6);
-    ctx.fill();
-    // knot
-    ctx.fillStyle="rgba(255,255,255,0.35)";
-    rr(-6,-10,12,12,6); ctx.fill();
-    ctx.restore();
+    ctx.rotate(sway);
+    const sx = 1.08, sy = 0.92;
+    ctx.scale(sx, sy);
 
-    // cheeks
+    ctx.fillStyle=player.skin.base;
+    ctx.beginPath(); ctx.arc(0, breathe*0.2, r, 0, Math.PI*2); ctx.fill();
+
+    ctx.fillStyle="rgba(255,255,255,0.16)";
+    ctx.beginPath(); ctx.ellipse(-r*0.28, -r*0.28, r*0.38, r*0.26, 0, 0, Math.PI*2); ctx.fill();
+
+    ctx.fillStyle=player.skin.hair;
+    rr(-r*0.78, -r*0.98, r*1.56, r*0.52, r*0.22); ctx.fill();
+
     ctx.fillStyle="rgba(255,107,155,0.35)";
-    ctx.beginPath(); ctx.arc(-r*0.42, r*0.15, r*0.16, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc( r*0.42, r*0.15, r*0.16, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(-r*0.44, r*0.12, r*0.16, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc( r*0.44, r*0.12, r*0.16, 0, Math.PI*2); ctx.fill();
 
-    // blink
     player.blinkT -= 1/60;
     if(player.blinkT<=0 && Math.random()<0.01) player.blinkT=0.12;
     const blink = player.blinkT>0;
@@ -1431,51 +1326,105 @@
       ctx.strokeStyle="#0b0f1f";
       ctx.lineWidth=Math.max(2, r*0.10);
       ctx.beginPath();
-      ctx.moveTo(-r*0.35, -r*0.10); ctx.lineTo(-r*0.18, -r*0.10);
-      ctx.moveTo( r*0.18, -r*0.10); ctx.lineTo( r*0.35, -r*0.10);
+      ctx.moveTo(-r*0.36, -r*0.12); ctx.lineTo(-r*0.18, -r*0.12);
+      ctx.moveTo( r*0.18, -r*0.12); ctx.lineTo( r*0.36, -r*0.12);
       ctx.stroke();
-    } else {
+    }else{
       ctx.fillStyle="#0b0f1f";
-      ctx.beginPath(); ctx.arc(-r*0.26, -r*0.12, r*0.10, 0, Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.arc( r*0.26, -r*0.12, r*0.10, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(-r*0.26, -r*0.16, r*0.10, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc( r*0.26, -r*0.16, r*0.10, 0, Math.PI*2); ctx.fill();
       ctx.fillStyle="rgba(255,255,255,0.9)";
-      ctx.beginPath(); ctx.arc(-r*0.22, -r*0.17, r*0.04, 0, Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.arc( r*0.22, -r*0.17, r*0.04, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(-r*0.22, -r*0.20, r*0.04, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc( r*0.22, -r*0.20, r*0.04, 0, Math.PI*2); ctx.fill();
     }
 
-    // smile
     ctx.strokeStyle="#7a3f2b";
     ctx.lineWidth=Math.max(2, r*0.08);
     ctx.beginPath();
-    ctx.arc(0, r*0.18, r*0.18, 0, Math.PI);
+    ctx.arc(0, r*0.16, r*0.18, 0, Math.PI);
     ctx.stroke();
 
-    // tiny arms (2 tay nhỏ xíu thả xuống)
-    ctx.strokeStyle="rgba(43,26,59,0.55)";
-    ctx.lineWidth=Math.max(2, r*0.08);
+    ctx.restore(); // end body warp
+
+    // tay rũ xuống + có chuyển động
+    const armSwing = player.onGround ? Math.sin(player.runT*10)*0.25 : Math.sin(t*3.0)*0.10;
+    ctx.save();
+    ctx.rotate(sway);
+
+    ctx.strokeStyle="rgba(255,224,194,0.92)";
+    ctx.lineWidth=Math.max(3, r*0.12);
     ctx.lineCap="round";
+
     ctx.beginPath();
-    ctx.moveTo(-r*0.78, r*0.12);
-    ctx.lineTo(-r*0.92, r*0.46);
-    ctx.moveTo(r*0.78, r*0.12);
-    ctx.lineTo(r*0.92, r*0.46);
+    ctx.moveTo(-r*0.70, r*0.28);
+    ctx.quadraticCurveTo(-r*0.92, r*0.62, -r*0.70, r*0.98 + armSwing*8);
     ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(r*0.70, r*0.28);
+    ctx.quadraticCurveTo(r*0.92, r*0.62, r*0.70, r*0.98 - armSwing*8);
+    ctx.stroke();
+
+    ctx.restore();
+
+    // nơ hoa bên phải
+    ctx.save();
+    ctx.translate(r*0.72, -r*0.62);
+    ctx.rotate(-0.25);
+
+    ctx.globalAlpha=0.95;
+    ctx.fillStyle="rgba(255,107,155,0.95)";
+    for(let i=0;i<5;i++){
+      const ang = i*(Math.PI*2/5);
+      ctx.beginPath();
+      ctx.ellipse(Math.cos(ang)*6, Math.sin(ang)*6, 6, 3.8, ang, 0, Math.PI*2);
+      ctx.fill();
+    }
+    ctx.fillStyle="rgba(255,255,255,0.92)";
+    ctx.beginPath(); ctx.arc(0,0,3.2,0,Math.PI*2); ctx.fill();
+
+    ctx.fillStyle="rgba(30,255,214,0.80)";
+    ctx.beginPath();
+    ctx.moveTo(-4,6); ctx.lineTo(-14,18); ctx.lineTo(-2,14); ctx.closePath(); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(4,6); ctx.lineTo(14,18); ctx.lineTo(2,14); ctx.closePath(); ctx.fill();
+
+    ctx.restore();
 
     ctx.restore();
   }
 
-  /* ===== HUD (small + minimal) ===== */
+  /* ===== HUD: SCORE box + KG box (không đè lên nhân vật) ===== */
   function drawHUD(){
-    // minimal top-left score only
-    ctx.fillStyle="rgba(10,12,30,0.55)";
-    rr(12,12,170,46,14); ctx.fill();
-    ctx.strokeStyle="rgba(30,255,214,0.22)";
+    // SCORE (trái)
+    ctx.fillStyle="rgba(30,255,214,0.14)";
+    rr(12,12,220,56,16); ctx.fill();
+    ctx.strokeStyle="rgba(255,107,155,0.28)";
     ctx.lineWidth=2;
-    rr(14,14,166,42,13); ctx.stroke();
+    rr(14,14,216,52,15); ctx.stroke();
 
     ctx.fillStyle="#fff";
     ctx.font="1000 14px system-ui";
-    ctx.fillText(`SCORE: ${Math.floor(player.score)}`, 26, 40);
+    ctx.fillText(`SCORE: ${Math.floor(player.score)}`, 26, 36);
+    ctx.font="850 12px system-ui";
+    ctx.fillStyle="rgba(255,255,255,0.88)";
+    ctx.fillText(`Thắng khi ≤${TARGET_KG}kg`, 26, 54);
+
+    // KG (kề bên)
+    const x2 = 12+220+10;
+    ctx.fillStyle="rgba(255,107,155,0.14)";
+    rr(x2,12,190,56,16); ctx.fill();
+    ctx.strokeStyle="rgba(30,255,214,0.30)";
+    ctx.lineWidth=2;
+    rr(x2+2,14,186,52,15); ctx.stroke();
+
+    ctx.fillStyle="#fff";
+    ctx.font="1000 14px system-ui";
+    ctx.fillText(`KG: ${player.kg.toFixed(2)}`, x2+14, 36);
+
+    ctx.font="850 12px system-ui";
+    ctx.fillStyle="rgba(255,255,255,0.88)";
+    ctx.fillText(player.kg>LOSE_KG?`THUA: >${LOSE_KG}kg`:`Nhẹ hơn = nhảy cao`, x2+14, 54);
   }
 
   /* ===== Loop ===== */
@@ -1491,6 +1440,7 @@
       V.reset=false;
       sfx("ui");
       reset();
+      showGuideToast();
     }
 
     if(mode==="play"){
@@ -1511,21 +1461,19 @@
     ctx.clearRect(0,0,W(),H());
     drawBG(t);
 
-    if(mode==="play" || mode==="welcome" || mode==="tutorial"){
-      drawWorld(t);
-      if(mode==="play") drawHUD();
+    if(mode==="play" || mode==="welcome"){
+      // nếu đang welcome thì chỉ vẽ nền thôi, không vẽ map/hud để nhẹ và sạch
+      if(mode==="play"){
+        drawWorld(t);
+        drawHUD();
+      }
     }
 
     requestAnimationFrame(loop);
   }
 
-  /* ===== Start ===== */
-  function init(){
-    // show welcome (already visible by default)
-    reset();
-    requestAnimationFrame(loop);
-  }
-  init();
+  /* ===== Start loop ===== */
+  requestAnimationFrame(loop);
 
 })();
 </script>
