@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport"
       content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,viewport-fit=cover"/>
-<title>BÀ ĐỤT – v6 (No zoom button + nicer weight icon + restart circular arrow + no dark head bar + city background)</title>
+<title>BÀ ĐỤT – v7 (No hair, calmer background, nicer arms)</title>
 <style>
   html,body{
     margin:0;height:100%;
@@ -47,7 +47,6 @@
     display:flex; gap:8px; align-items:center;
     font-size:16px;
   }
-  /* weight icon: "dễ thương" hơn (bao tròn + trái tim) */
   #kgIcon{
     width:20px; height:20px;
     border-radius:999px;
@@ -440,8 +439,8 @@
   const againBtn = document.getElementById("againBtn");
   const clearBtn = document.getElementById("clearBtn");
 
-  const LS_KEY="badut_ranking_v6";
-  const BEST_KEY="badut_best_v6";
+  const LS_KEY="badut_ranking_v7";
+  const BEST_KEY="badut_best_v7";
 
   function loadRanking(){ try{ return JSON.parse(localStorage.getItem(LS_KEY) || "[]"); } catch{ return []; } }
   function saveRanking(arr){ localStorage.setItem(LS_KEY, JSON.stringify(arr)); }
@@ -551,10 +550,10 @@
     ctx.translate(x,y);
     const w=s, h=s;
 
-    const glow = 0.14 + (Math.sin(t*3.2)*0.5+0.5)*0.16;
+    const glow = 0.10 + (Math.sin(t*2.6)*0.5+0.5)*0.14;
     ctx.globalAlpha=glow;
-    ctx.fillStyle="rgba(30,255,214,0.9)";
-    rr(-5,-5,w+10,h+10,16); ctx.fill();
+    ctx.fillStyle="rgba(30,255,214,0.8)";
+    rr(-4,-4,w+8,h+8,16); ctx.fill();
     ctx.globalAlpha=1;
 
     ctx.fillStyle="rgba(255,255,255,0.92)";
@@ -570,47 +569,47 @@
 
   /* ===== Casino-style Exit Door ===== */
   function drawCasinoExitDoor(x,y,w,h,t){
-    const blink = (Math.sin(t*6.0)*0.5+0.5);
+    const blink = (Math.sin(t*4.0)*0.5+0.5);
     ctx.save();
     ctx.translate(x,y);
 
-    ctx.globalAlpha=0.10 + blink*0.16;
-    ctx.fillStyle="rgba(255,107,155,0.95)";
-    rr(-18,-22,w+36,h+46,22); ctx.fill();
+    ctx.globalAlpha=0.08 + blink*0.12;
+    ctx.fillStyle="rgba(255,107,155,0.9)";
+    rr(-14,-18,w+28,h+38,22); ctx.fill();
     ctx.globalAlpha=1;
 
-    const bw = Math.min(280, w*4.2);
+    const bw = Math.min(260, w*4.0);
     const bx = w/2 - bw/2;
-    const by = -66;
+    const by = -62;
 
     ctx.fillStyle="rgba(10,12,30,0.70)";
-    rr(bx,by,bw,42,16); ctx.fill();
+    rr(bx,by,bw,40,16); ctx.fill();
 
-    const bulbs = 16;
+    const bulbs = 14;
     for(let i=0;i<bulbs;i++){
       const px = bx + 14 + i*(bw-28)/(bulbs-1);
-      const on = ((i + Math.floor(t*10)) % 3===0) ? 1 : 0;
-      ctx.globalAlpha = 0.30 + on*0.45;
-      ctx.fillStyle = on ? "rgba(30,255,214,0.95)" : "rgba(255,107,155,0.55)";
-      ctx.beginPath(); ctx.arc(px, by+10, 4.0, 0, Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.arc(px, by+32, 4.0, 0, Math.PI*2); ctx.fill();
+      const on = ((i + Math.floor(t*8)) % 3===0) ? 1 : 0;
+      ctx.globalAlpha = 0.25 + on*0.40;
+      ctx.fillStyle = on ? "rgba(30,255,214,0.90)" : "rgba(255,107,155,0.50)";
+      ctx.beginPath(); ctx.arc(px, by+10, 3.8, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(px, by+30, 3.8, 0, Math.PI*2); ctx.fill();
     }
     ctx.globalAlpha=1;
 
     ctx.fillStyle="#fff";
     ctx.font="1000 16px system-ui";
     ctx.textAlign="center";
-    ctx.fillText("ĐÍCH", bx+bw/2, by+27);
+    ctx.fillText("ĐÍCH", bx+bw/2, by+26);
     ctx.textAlign="left";
 
-    ctx.fillStyle="rgba(255,255,255,0.12)";
+    ctx.fillStyle="rgba(255,255,255,0.10)";
     rr(0,0,w,h,16); ctx.fill();
 
-    ctx.strokeStyle=`rgba(30,255,214,${0.30+blink*0.22})`;
+    ctx.strokeStyle=`rgba(30,255,214,${0.26+blink*0.18})`;
     ctx.lineWidth=3;
     rr(6,6,w-12,h-12,14); ctx.stroke();
 
-    ctx.fillStyle="rgba(255,107,155,0.9)";
+    ctx.fillStyle="rgba(255,107,155,0.85)";
     ctx.beginPath(); ctx.arc(w*0.72, h*0.56, 6, 0, Math.PI*2); ctx.fill();
 
     ctx.restore();
@@ -661,7 +660,7 @@
     }
   }
 
-  /* ===== Helpers for FX ===== */
+  /* ===== FX ===== */
   const particles=[], popups=[], confetti=[];
   function spawnSparkle(x,y,count=10){
     for(let i=0;i<count;i++){
@@ -728,7 +727,7 @@
     facing:1,
     runT:0,
     blinkT:0,
-    skin: { base:"#ffe0c2", hair:"#2b1a3b", name:"Bà Đụt" },
+    skin: { base:"#ffe0c2", name:"Bà Đụt" },
     inAir:false,
     ateDuringAir:false
   };
@@ -740,7 +739,7 @@
     centerMsg.text=text;
     centerMsg.t=0;
     centerMsg.life=1.05;
-    centerMsg.shake=8;
+    centerMsg.shake=6;
     sfx("warn");
   }
 
@@ -752,7 +751,6 @@
   function radius(){ return radiusFor(player.kg); }
   function jumpPower(){ const t=kgT(); return 820 - t*320; }
 
-  /* giữ tâm khi đổi kg => không giựt */
   function setKgKeepCenter(newKg){
     newKg = clamp(newKg, KG_MIN, KG_MAX);
     const oldR = radiusFor(player.kg);
@@ -949,17 +947,14 @@
 
     player.vy += GRAV*dt;
 
-    // rect
     const r=radius();
     let pr={x:player.x,y:player.y,w:r*2,h:r*2};
 
-    // doors open if near
     for(const d of doors){
       const near=rects(pr,{x:d.x-16,y:d.y-16,w:d.w+32,h:d.h+32});
       d.open = near && player.kg >= d.reqKg;
     }
 
-    // X collisions
     player.x += player.vx*dt; pr.x=player.x;
 
     for(const b of blocks){
@@ -977,7 +972,6 @@
       popup(`CẦN ≥ ${d.reqKg}KG`, d.x-10, d.y-10);
     }
 
-    // Y collisions
     player.y += player.vy*dt; pr.y=player.y;
     const wasOnGround=player.onGround;
     player.onGround=false;
@@ -1000,7 +994,6 @@
       player.inAir=false;
     }
 
-    // Eat static
     for(const f of foodsStatic){
       if(!f.alive) continue;
       if(rects(pr,f)){
@@ -1017,7 +1010,6 @@
       }
     }
 
-    // Eat falling
     for(let i=falling.length-1;i>=0;i--){
       const f=falling[i];
       if(rects(pr,{x:f.x,y:f.y,w:f.size,h:f.size})){
@@ -1034,7 +1026,6 @@
       }
     }
 
-    // toilet
     const toilet=nearToilet(pr);
     if(toilet && V.p && player.poopCD<=0){
       setKgKeepCenter(player.kg*0.99);
@@ -1048,7 +1039,6 @@
       popup("TÌM 🚽", player.x+r-10, player.y-18);
     }
 
-    // clamp
     const rr2=radius();
     player.x = clamp(player.x, 0, worldW-rr2*2);
     player.y = clamp(player.y, 0, worldH-rr2*2);
@@ -1060,85 +1050,81 @@
       else showCenter(`CHƯA ĐỦ ỐM (≤ ${TARGET_KG}KG)`);
     }
 
-    // HUD
     scoreTextEl.textContent = String(Math.floor(player.score));
     kgTextEl.textContent = `${player.kg.toFixed(2)}kg`;
   }
 
-  /* ===== Background: restore buildings/city ===== */
-  function drawCitySilhouette(t){
-    // skyline layers
-    const w=W(), h=H();
-    const baseY = h*0.62;
-    ctx.save();
-    // far layer
-    ctx.globalAlpha=0.20;
-    ctx.fillStyle="rgba(10,12,30,1)";
-    let x=0;
-    while(x<w+80){
-      const bw = 40 + Math.random()*60;
-      const bh = 60 + Math.random()*140;
-      rr(x, baseY-bh, bw, bh, 8);
-      ctx.fill();
-      x += bw + 14;
-    }
-    ctx.restore();
-
-    // near layer (deterministic-ish using sin)
-    ctx.save();
-    ctx.globalAlpha=0.26;
-    ctx.fillStyle="rgba(0,0,0,0.92)";
-    let x2= -40 + (Math.sin(t*0.12)*40);
+  /* ===== Background: FIX "lung tung" -> no randomness per frame ===== */
+  const skyline = [];
+  function buildSkyline(){
+    skyline.length=0;
+    const w=1200; // logical width chunk
+    let x= -60;
     let i=0;
-    while(x2<w+100){
-      const bw = 54 + (Math.sin(i*1.7+1.2)*0.5+0.5)*70;
-      const bh = 90 + (Math.sin(i*2.1+0.4)*0.5+0.5)*190;
-      rr(x2, baseY-bh+20, bw, bh, 10);
-      ctx.fill();
-      // windows sparkle
-      ctx.globalAlpha=0.14;
-      ctx.fillStyle="rgba(30,255,214,0.9)";
-      for(let k=0;k<6;k++){
-        const wx = x2+10+(k%3)*14;
-        const wy = baseY-bh+36 + Math.floor(k/3)*18;
-        ctx.fillRect(wx, wy, 6, 8);
-      }
-      ctx.globalAlpha=0.26;
-      ctx.fillStyle="rgba(0,0,0,0.92)";
-      x2 += bw + 18;
+    while(x<w+120){
+      const bw = 44 + (Math.sin(i*1.9+0.7)*0.5+0.5)*78;
+      const bh = 80 + (Math.sin(i*2.4+1.1)*0.5+0.5)*200;
+      const wxCount = 6;
+      skyline.push({x,bw,bh,wxCount});
+      x += bw + 18;
       i++;
     }
-    ctx.restore();
   }
+  buildSkyline();
 
   function drawBG(t){
+    // steady gradient
     const g=ctx.createLinearGradient(0,0,0,H());
-    g.addColorStop(0,"#16f7d2");
-    g.addColorStop(0.55,"#4b3cff");
+    g.addColorStop(0,"#0fe9c8");
+    g.addColorStop(0.55,"#3f3adf");
     g.addColorStop(1,"#ff6b9b");
     ctx.fillStyle=g; ctx.fillRect(0,0,W(),H());
 
-    // city + haze
-    drawCitySilhouette(t);
-
-    // neon sparkles
-    ctx.save();
-    ctx.globalAlpha=0.16;
-    for(let i=0;i<28;i++){
-      const x=(i*137 + (t*22)%700)%(W()+100)-50;
-      const y=70+(i*53)%Math.max(240,H()*0.55)+Math.sin(t*1.2+i)*10;
-      ctx.fillStyle=(i%3===0)?"rgba(30,255,214,0.95)":"rgba(255,107,155,0.95)";
-      ctx.beginPath(); ctx.arc(x,y,2.2,0,Math.PI*2); ctx.fill();
-    }
-    ctx.restore();
-
-    // soft floor fog
+    // calm haze
     ctx.save();
     ctx.globalAlpha=0.10;
     ctx.fillStyle="rgba(255,255,255,0.6)";
     ctx.beginPath();
-    ctx.ellipse(W()*0.50, H()*0.92, W()*0.7, H()*0.12, 0, 0, Math.PI*2);
+    ctx.ellipse(W()*0.5, H()*0.84, W()*0.75, H()*0.14, 0, 0, Math.PI*2);
     ctx.fill();
+    ctx.restore();
+
+    // skyline: VERY slow parallax (stable)
+    const baseY = H()*0.66;
+    const par = (Math.sin(t*0.05)*14); // slow tiny shift
+    ctx.save();
+    ctx.globalAlpha=0.22;
+    ctx.fillStyle="rgba(0,0,0,0.90)";
+    const scale = W()/1200;
+    for(const b of skyline){
+      const x = (b.x*scale + par);
+      rr(x, baseY - b.bh*scale, b.bw*scale, b.bh*scale, 10*scale);
+      ctx.fill();
+
+      // windows (stable blink very slow)
+      const blink = (Math.sin(t*0.6 + b.x*0.01)*0.5+0.5);
+      ctx.globalAlpha=0.06 + blink*0.06;
+      ctx.fillStyle="rgba(30,255,214,0.9)";
+      for(let k=0;k<6;k++){
+        const wx = x + 10*scale + (k%3)*16*scale;
+        const wy = baseY - b.bh*scale + 36*scale + Math.floor(k/3)*18*scale;
+        ctx.fillRect(wx, wy, 7*scale, 9*scale);
+      }
+      ctx.globalAlpha=0.22;
+      ctx.fillStyle="rgba(0,0,0,0.90)";
+    }
+    ctx.restore();
+
+    // few sparkles: stable positions
+    ctx.save();
+    ctx.globalAlpha=0.12;
+    for(let i=0;i<14;i++){
+      const x = (i*143)%W();
+      const y = 90 + ((i*79)%Math.max(240, H()*0.45));
+      const s = 1.5 + (Math.sin(t*1.1+i)*0.5+0.5)*1.2;
+      ctx.fillStyle = (i%2===0) ? "rgba(30,255,214,0.95)" : "rgba(255,107,155,0.95)";
+      ctx.beginPath(); ctx.arc(x,y,s,0,Math.PI*2); ctx.fill();
+    }
     ctx.restore();
   }
 
@@ -1152,14 +1138,11 @@
     ctx.save();
     ctx.translate(-cam.x, -cam.y);
 
-    // blocks
     ctx.fillStyle="rgba(10,12,30,0.68)";
     for(const b of blocks) ctx.fillRect(b.x,b.y,b.w,b.h);
 
-    // toilets
     for(const tt of toilets) drawToiletIcon(tt.x, tt.y, tt.w, t);
 
-    // doors
     for(const d of doors){
       ctx.fillStyle = d.open ? "rgba(30,255,214,0.14)" : "rgba(30,255,214,0.28)";
       rr(d.x,d.y,d.w,d.h,14); ctx.fill();
@@ -1168,7 +1151,6 @@
       ctx.fillText(d.open ? "MỞ" : `≥${d.reqKg}KG`, d.x+10, d.y+24);
     }
 
-    // static foods
     for(const f of foodsStatic){
       if(!f.alive) continue;
       drawFoodIcon(f.def.id, f.x, f.y, 34);
@@ -1177,7 +1159,6 @@
       ctx.fillText(`${f.def.kg}kg`, f.x+4, f.y-3);
     }
 
-    // falling
     for(const f of falling){
       ctx.save();
       ctx.translate(f.x+f.size/2, f.y+f.size/2);
@@ -1186,13 +1167,10 @@
       ctx.restore();
     }
 
-    // finish door
     drawCasinoExitDoor(finish.x, finish.y, finish.w, finish.h, t);
 
-    // player
     drawPlayer(t);
 
-    // fx
     for(const p of particles){
       const k=1-p.t/p.life;
       if(p.kind==="spark"){
@@ -1219,7 +1197,6 @@
 
     ctx.restore();
 
-    // center message
     if(centerMsg.life>0){
       const a = 0.92 * Math.max(0, Math.min(1, (centerMsg.life-centerMsg.t)/0.35));
       const shake = centerMsg.shake>0 ? (Math.random()*2-1)*centerMsg.shake : 0;
@@ -1241,13 +1218,12 @@
     }
   }
 
-  /* ===== Player: remove "đen đen" trên đầu -> bỏ tóc dạng thanh, thay tóc mềm ===== */
+  /* ===== Player: NO hair. Flower only. Arms lowered + "mặc cười" ===== */
   function drawPlayer(t){
     const r=radius();
-
-    const breathe = Math.sin(t*2.6)*1.6;
-    const runBounce = player.onGround ? Math.sin(player.runT*10)*2.4 : 0;
-    const sway = player.onGround ? Math.sin(player.runT*6)*0.08 : Math.sin(t*2.2)*0.05;
+    const breathe = Math.sin(t*2.2)*1.2;
+    const runBounce = player.onGround ? Math.sin(player.runT*10)*2.0 : 0;
+    const sway = player.onGround ? Math.sin(player.runT*6)*0.06 : Math.sin(t*1.8)*0.04;
 
     ctx.save();
     ctx.translate(player.x+r, player.y+r+runBounce);
@@ -1268,20 +1244,9 @@
     ctx.fillStyle=player.skin.base;
     ctx.beginPath(); ctx.arc(0, breathe*0.2, r, 0, Math.PI*2); ctx.fill();
 
+    // highlight
     ctx.fillStyle="rgba(255,255,255,0.14)";
     ctx.beginPath(); ctx.ellipse(-r*0.28, -r*0.28, r*0.36, r*0.24, 0, 0, Math.PI*2); ctx.fill();
-
-    /* hair mềm (không còn thanh đen ngang) */
-    ctx.fillStyle=player.skin.hair;
-    ctx.beginPath();
-    ctx.ellipse(0, -r*0.62, r*0.78, r*0.42, 0, 0, Math.PI*2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(-r*0.28, -r*0.54, r*0.55, r*0.34, 0.15, 0, Math.PI*2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(r*0.26, -r*0.54, r*0.55, r*0.34, -0.15, 0, Math.PI*2);
-    ctx.fill();
 
     // cheeks
     ctx.fillStyle="rgba(255,107,155,0.30)";
@@ -1295,7 +1260,7 @@
 
     if(blink){
       ctx.strokeStyle="#0b0f1f";
-      ctx.lineWidth=Math.max(2, r*0.09);
+      ctx.lineWidth=Math.max(2, r*0.085);
       ctx.beginPath();
       ctx.moveTo(-r*0.34, -r*0.12); ctx.lineTo(-r*0.18, -r*0.12);
       ctx.moveTo( r*0.18, -r*0.12); ctx.lineTo( r*0.34, -r*0.12);
@@ -1309,39 +1274,41 @@
       ctx.beginPath(); ctx.arc( r*0.20, -r*0.20, r*0.035, 0, Math.PI*2); ctx.fill();
     }
 
-    // smile
+    // "mặc cười" -> miệng lệch + răng nhỏ
     ctx.strokeStyle="#7a3f2b";
     ctx.lineWidth=Math.max(2, r*0.07);
     ctx.beginPath();
-    ctx.arc(0, r*0.16, r*0.16, 0, Math.PI);
+    ctx.arc(r*0.04, r*0.20, r*0.18, 0.05, Math.PI-0.25);
     ctx.stroke();
+    ctx.fillStyle="rgba(255,255,255,0.85)";
+    rr(-r*0.06, r*0.22, r*0.16, r*0.09, 6); ctx.fill();
 
-    ctx.restore(); // end body
+    ctx.restore(); // body
 
-    // tiny arms
+    // arms lowered (short + sát thân, "đe xuống" hơn)
     ctx.save();
     ctx.rotate(sway);
     ctx.fillStyle="rgba(255,224,194,0.92)";
-    const aw = Math.max(4, r*0.22);
-    const ah = Math.max(8, r*0.38);
-    rr(-r-3, r*0.10, aw, ah, 6); ctx.fill();
-    rr(r-aw+3, r*0.10, aw, ah, 6); ctx.fill();
+    const aw = Math.max(4, r*0.20);
+    const ah = Math.max(8, r*0.44);
+    rr(-r-3, r*0.22, aw, ah, 7); ctx.fill();
+    rr(r-aw+3, r*0.22, aw, ah, 7); ctx.fill();
     ctx.restore();
 
-    // flower smaller
+    // flower (only) smaller
     ctx.save();
-    ctx.translate(r*0.70, -r*0.62);
-    ctx.rotate(-0.20);
+    ctx.translate(r*0.72, -r*0.60);
+    ctx.rotate(-0.18);
     ctx.globalAlpha=0.92;
     ctx.fillStyle="rgba(255,107,155,0.95)";
     for(let i=0;i<5;i++){
       const ang = i*(Math.PI*2/5);
       ctx.beginPath();
-      ctx.ellipse(Math.cos(ang)*4.8, Math.sin(ang)*4.8, 4.2, 2.8, ang, 0, Math.PI*2);
+      ctx.ellipse(Math.cos(ang)*4.4, Math.sin(ang)*4.4, 3.8, 2.6, ang, 0, Math.PI*2);
       ctx.fill();
     }
     ctx.fillStyle="rgba(255,255,255,0.92)";
-    ctx.beginPath(); ctx.arc(0,0,2.4,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(0,0,2.2,0,Math.PI*2); ctx.fill();
     ctx.restore();
 
     ctx.restore();
@@ -1380,7 +1347,6 @@
     const t=ts/1000;
     ctx.clearRect(0,0,W(),H());
     drawBG(t);
-
     if(mode==="play") drawWorld(t);
 
     requestAnimationFrame(loop);
