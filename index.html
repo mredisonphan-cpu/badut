@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport"
       content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,viewport-fit=cover"/>
-<title>BÀ ĐỤT – v7 (No hair, calmer background, nicer arms)</title>
+<title>BÀ ĐỤT – v8 (hair, bigger arrows, weight icon)</title>
 <style>
   html,body{
     margin:0;height:100%;
@@ -28,21 +28,18 @@
 
   #hud{ position:fixed; inset:0; pointer-events:none; touch-action:none; }
 
-  /* ===== Minimal top HUD (NO BOX) ===== */
+  /* Top HUD (no box) */
   #hudTop{
     position:absolute;
     left:calc(12px + var(--safeL));
     top:calc(10px + var(--safeT));
-    display:flex;
-    gap:14px;
-    align-items:center;
-    pointer-events:none;
+    display:flex; gap:14px; align-items:center;
     color:#fff;
     font-weight:1000;
     text-shadow:0 2px 10px rgba(0,0,0,.35);
+    pointer-events:none;
   }
   #scoreText{ font-size:18px; }
-
   #kgWrap{
     display:flex; gap:8px; align-items:center;
     font-size:16px;
@@ -58,7 +55,7 @@
     line-height:1;
   }
 
-  /* ===== Buttons base ===== */
+  /* Buttons */
   .btn{
     pointer-events:auto;
     display:grid; place-items:center;
@@ -74,7 +71,7 @@
   }
   .btn:active{ background:rgba(255,107,155,0.22); transform:scale(.98); }
 
-  /* ===== Bottom layout: 1 hàng gọn ===== */
+  /* Bottom bar */
   #bottomBar{
     position:absolute;
     left:calc(10px + var(--safeL));
@@ -86,11 +83,10 @@
     gap:10px;
     pointer-events:auto;
   }
+  #navGroup{ display:flex; gap:10px; align-items:flex-end; }
+  /* bigger arrows per request */
+  #navGroup .btn{ width:68px; height:64px; font-size:26px; border-radius:16px; }
 
-  #navGroup{ display:flex; gap:8px; align-items:flex-end; }
-  #navGroup .btn{ width:56px; height:56px; font-size:22px; }
-
-  /* group bên phải: 2 hàng (trên JUMP, dưới: ị & bủm) */
   #actGroup{
     display:flex;
     flex-direction:column;
@@ -101,7 +97,7 @@
   #subActs{ display:flex; gap:8px; }
   #subActs .btn{ width:64px; height:44px; font-size:14px; border-radius:14px; }
 
-  /* Restart: vòng tròn mũi tên */
+  /* Restart button */
   #reset{
     position:absolute;
     top:calc(10px + var(--safeT));
@@ -112,7 +108,7 @@
     pointer-events:auto;
   }
 
-  /* ===== Welcome overlay ===== */
+  /* Welcome overlay */
   #welcome{
     position:fixed; inset:0;
     display:flex;
@@ -147,7 +143,7 @@
   }
   #playBtn:active{ background:rgba(255,107,155,0.25); transform:scale(.99); }
 
-  /* ===== In-game guide toast ===== */
+  /* Guide toast */
   #guideToast{
     position:fixed;
     left:calc(12px + var(--safeL));
@@ -174,7 +170,7 @@
   }
   #guideToastInner b{ color:rgba(30,255,214,0.95); }
 
-  /* ===== End overlay ===== */
+  /* End overlay */
   #end{
     position:fixed; inset:0;
     display:none;
@@ -221,13 +217,18 @@
   .muted{ opacity:0.8; font-weight:800; }
 </style>
 </head>
+
 <body>
 <canvas id="c"></canvas>
 
 <div id="hud" style="display:none;">
   <div id="hudTop">
     <div id="scoreText">0</div>
-    <div id="kgWrap"><div id="kgIcon">♥</div><div id="kgText">0kg</div></div>
+    <div id="kgWrap">
+      <!-- weight-related icon (scale) -->
+      <div id="kgIcon">⚖️</div>
+      <div id="kgText">0kg</div>
+    </div>
   </div>
 
   <div id="reset" class="btn" title="Restart">↻</div>
@@ -282,7 +283,7 @@
 
 <script>
 (() => {
-  /* ===== iOS: chống zoom/scroll ===== */
+  /* ===== Prevent iOS zoom/scroll ===== */
   ["gesturestart","gesturechange","gestureend"].forEach(evt=>{
     document.addEventListener(evt, e=>e.preventDefault(), {passive:false});
   });
@@ -310,7 +311,7 @@
   resize();
   const W=()=>innerWidth, H=()=>innerHeight;
 
-  /* ===== Audio (simple) ===== */
+  /* ===== Audio (tiny SFX) ===== */
   let AC=null, audioOn=true, unlocked=false;
   function ensureAudio(){
     if(!AC) AC = new (window.AudioContext||window.webkitAudioContext)();
@@ -377,7 +378,7 @@
     ctx.closePath();
   }
 
-  /* ===== UI Buttons bind ===== */
+  /* ===== UI Bind ===== */
   const hudEl = document.getElementById("hud");
   const V = {l:false,r:false,j:false,f:false,p:false, reset:false};
 
@@ -403,7 +404,6 @@
   resetBtn.addEventListener("touchstart",(e)=>{e.preventDefault(); unlockAudio(); V.reset=true;},{passive:false});
   resetBtn.addEventListener("pointerdown",(e)=>{e.preventDefault(); unlockAudio(); V.reset=true;},{passive:false});
 
-  /* ===== HUD text nodes ===== */
   const scoreTextEl = document.getElementById("scoreText");
   const kgTextEl = document.getElementById("kgText");
 
@@ -439,8 +439,8 @@
   const againBtn = document.getElementById("againBtn");
   const clearBtn = document.getElementById("clearBtn");
 
-  const LS_KEY="badut_ranking_v7";
-  const BEST_KEY="badut_best_v7";
+  const LS_KEY="badut_ranking_v8";
+  const BEST_KEY="badut_best_v8";
 
   function loadRanking(){ try{ return JSON.parse(localStorage.getItem(LS_KEY) || "[]"); } catch{ return []; } }
   function saveRanking(arr){ localStorage.setItem(LS_KEY, JSON.stringify(arr)); }
@@ -544,7 +544,7 @@
     ctx.restore();
   }
 
-  /* ===== Toilet icon ONLY ===== */
+  /* ===== Toilet icon only ===== */
   function drawToiletIcon(x,y,s, t){
     ctx.save();
     ctx.translate(x,y);
@@ -567,7 +567,7 @@
     ctx.restore();
   }
 
-  /* ===== Casino-style Exit Door ===== */
+  /* ===== Casino Exit Door ===== */
   function drawCasinoExitDoor(x,y,w,h,t){
     const blink = (Math.sin(t*4.0)*0.5+0.5);
     ctx.save();
@@ -615,9 +615,8 @@
     ctx.restore();
   }
 
-  /* ===== World ===== */
+  /* ===== Level ===== */
   const TILE=48;
-
   const level = [
 "#########..............................................................................o........................................................................................................",
 "#................o.......o...............o........o...................................o........o.......o.......o..o..o..o..o..o...o..o..o..#.o.o.o.o.o.o.o..................TTTTTTT...............F.",
@@ -631,7 +630,7 @@
   ];
   const maxLen = Math.max(...level.map(r=>r.length));
   for(let i=0;i<level.length;i++){
-    if(level[i].length < maxLen) level[i] = level[i] + "#".repeat(maxLen - level[i].length);
+    if(level[i].length < maxLen) level[i] += "#".repeat(maxLen - level[i].length);
   }
 
   const blocks=[], foodsStatic=[], doors=[], toilets=[];
@@ -766,6 +765,7 @@
     player.x = clamp(player.x, 0, worldW - newR*2);
     player.y = clamp(player.y, 0, worldH - newR*2);
   }
+
   function resolvePenetration(){
     const r=radius();
     let pr={x:player.x,y:player.y,w:r*2,h:r*2};
@@ -810,24 +810,6 @@
     }
   }
 
-  function reset(){
-    player.x=start.x; player.y=start.y;
-    player.vx=0; player.vy=0;
-    player.kg=55; player.jumps=2;
-    player.onGround=false;
-    player.fartCD=0; player.poopCD=0;
-    player.score=0;
-    player.facing=1;
-    player.inAir=false;
-    player.ateDuringAir=false;
-
-    for(const f of foodsStatic) f.alive=true;
-    falling.length=0; particles.length=0; popups.length=0; confetti.length=0;
-    for(const d of doors) d.open=false;
-
-    popup("BÀ ĐỤT XUẤT PHÁT!", player.x, player.y-24, true);
-  }
-
   function nearToilet(pr){
     for(const t of toilets){
       const near = rects(pr, {x:t.x-18,y:t.y-18,w:t.w+36,h:t.h+36});
@@ -853,10 +835,95 @@
     showEnd("win");
   }
 
+  function reset(){
+    player.x=start.x; player.y=start.y;
+    player.vx=0; player.vy=0;
+    player.kg=55; player.jumps=2;
+    player.onGround=false;
+    player.fartCD=0; player.poopCD=0;
+    player.score=0;
+    player.facing=1;
+    player.inAir=false;
+    player.ateDuringAir=false;
+
+    for(const f of foodsStatic) f.alive=true;
+    falling.length=0; particles.length=0; popups.length=0; confetti.length=0;
+    for(const d of doors) d.open=false;
+
+    popup("BÀ ĐỤT XUẤT PHÁT!", player.x, player.y-24, true);
+  }
+
+  /* ===== Background (stable) ===== */
+  const skyline=[];
+  function buildSkyline(){
+    skyline.length=0;
+    const logicalW=1200;
+    let x=-60, i=0;
+    while(x<logicalW+120){
+      const bw = 44 + (Math.sin(i*1.9+0.7)*0.5+0.5)*78;
+      const bh = 80 + (Math.sin(i*2.4+1.1)*0.5+0.5)*200;
+      skyline.push({x,bw,bh});
+      x += bw + 18;
+      i++;
+    }
+  }
+  buildSkyline();
+
+  function drawBG(t){
+    const g=ctx.createLinearGradient(0,0,0,H());
+    g.addColorStop(0,"#0fe9c8");
+    g.addColorStop(0.55,"#3f3adf");
+    g.addColorStop(1,"#ff6b9b");
+    ctx.fillStyle=g; ctx.fillRect(0,0,W(),H());
+
+    ctx.save();
+    ctx.globalAlpha=0.10;
+    ctx.fillStyle="rgba(255,255,255,0.6)";
+    ctx.beginPath();
+    ctx.ellipse(W()*0.5, H()*0.84, W()*0.75, H()*0.14, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+
+    const baseY = H()*0.66;
+    const par = (Math.sin(t*0.05)*14);
+    ctx.save();
+    ctx.globalAlpha=0.22;
+    ctx.fillStyle="rgba(0,0,0,0.90)";
+    const scale = W()/1200;
+    for(const b of skyline){
+      const x = (b.x*scale + par);
+      rr(x, baseY - b.bh*scale, b.bw*scale, b.bh*scale, 10*scale);
+      ctx.fill();
+      const blink = (Math.sin(t*0.6 + b.x*0.01)*0.5+0.5);
+      ctx.globalAlpha=0.06 + blink*0.06;
+      ctx.fillStyle="rgba(30,255,214,0.9)";
+      for(let k=0;k<6;k++){
+        const wx = x + 10*scale + (k%3)*16*scale;
+        const wy = baseY - b.bh*scale + 36*scale + Math.floor(k/3)*18*scale;
+        ctx.fillRect(wx, wy, 7*scale, 9*scale);
+      }
+      ctx.globalAlpha=0.22;
+      ctx.fillStyle="rgba(0,0,0,0.90)";
+    }
+    ctx.restore();
+
+    ctx.save();
+    ctx.globalAlpha=0.12;
+    for(let i=0;i<14;i++){
+      const x = (i*143)%W();
+      const y = 90 + ((i*79)%Math.max(240, H()*0.45));
+      const s = 1.5 + (Math.sin(t*1.1+i)*0.5+0.5)*1.2;
+      ctx.fillStyle = (i%2===0) ? "rgba(30,255,214,0.95)" : "rgba(255,107,155,0.95)";
+      ctx.beginPath(); ctx.arc(x,y,s,0,Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  /* ===== Main step ===== */
   function step(dt){
     if(mode!=="play") return;
 
-    player.score += dt * 2.0;
+    player.score += dt*2.0;
 
     centerMsg.t += dt;
     if(centerMsg.t > centerMsg.life) centerMsg.life=0;
@@ -909,8 +976,8 @@
     player.poopCD=Math.max(0, player.poopCD-dt);
 
     let ax=0;
-    if(V.l) ax-=MOVE;
-    if(V.r) ax+=MOVE;
+    if(V.l) ax-=980;
+    if(V.r) ax+=980;
     if(ax!==0) player.facing = ax>0 ? 1 : -1;
 
     player.vx += ax*dt;
@@ -938,44 +1005,27 @@
       player.fartCD=0.12;
       if(before-player.kg>0){
         const r=radius();
-        const fx=player.x+r+(player.facing>0 ? -r*0.95 : r*0.95);
-        const fy=player.y+r*1.12;
-        spawnFart(fx, fy, -player.facing);
+        spawnFart(player.x+r+(player.facing>0 ? -r*0.95 : r*0.95), player.y+r*1.12, -player.facing);
         sfx("fart");
       }
     }
 
-    player.vy += GRAV*dt;
+    player.vy += 2450*dt;
 
     const r=radius();
     let pr={x:player.x,y:player.y,w:r*2,h:r*2};
 
-    for(const d of doors){
-      const near=rects(pr,{x:d.x-16,y:d.y-16,w:d.w+32,h:d.h+32});
-      d.open = near && player.kg >= d.reqKg;
-    }
-
     player.x += player.vx*dt; pr.x=player.x;
-
     for(const b of blocks){
       if(!rects(pr,b)) continue;
-      if(player.vx>0) player.x = b.x - pr.w;
-      else if(player.vx<0) player.x = b.x + b.w;
+      if(player.vx>0) player.x=b.x-pr.w;
+      else if(player.vx<0) player.x=b.x+b.w;
       player.vx=0; pr.x=player.x;
-    }
-    for(const d of doors){
-      if(d.open) continue;
-      if(!rects(pr,d)) continue;
-      if(player.vx>0) player.x = d.x - pr.w;
-      else if(player.vx<0) player.x = d.x + d.w;
-      player.vx=0; pr.x=player.x;
-      popup(`CẦN ≥ ${d.reqKg}KG`, d.x-10, d.y-10);
     }
 
     player.y += player.vy*dt; pr.y=player.y;
     const wasOnGround=player.onGround;
     player.onGround=false;
-
     for(const b of blocks){
       if(!rects(pr,b)) continue;
       if(player.vy>0){
@@ -985,12 +1035,8 @@
       }
       pr.y=player.y;
     }
-
     if(!wasOnGround && player.onGround && player.inAir){
-      if(!player.ateDuringAir){
-        player.score += 2;
-        popup("+CLEAN JUMP", player.x+r-24, player.y-18);
-      }
+      if(!player.ateDuringAir){ player.score += 2; popup("+CLEAN JUMP", player.x+r-24, player.y-18); }
       player.inAir=false;
     }
 
@@ -1002,14 +1048,12 @@
         resolvePenetration();
         const nr=radius();
         pr={x:player.x,y:player.y,w:nr*2,h:nr*2};
-
         spawnSparkle(f.x+14,f.y+14,10);
         popup(`+${f.def.kg}kg`, f.x, f.y-8);
         player.ateDuringAir = player.ateDuringAir || !player.onGround;
         sfx("eat");
       }
     }
-
     for(let i=falling.length-1;i>=0;i--){
       const f=falling[i];
       if(rects(pr,{x:f.x,y:f.y,w:f.size,h:f.size})){
@@ -1017,7 +1061,6 @@
         resolvePenetration();
         const nr=radius();
         pr={x:player.x,y:player.y,w:nr*2,h:nr*2};
-
         spawnSparkle(f.x+f.size/2,f.y+f.size/2,10);
         popup(`+${f.def.kg}kg`, f.x, f.y-8);
         player.ateDuringAir = player.ateDuringAir || !player.onGround;
@@ -1044,7 +1087,6 @@
     player.y = clamp(player.y, 0, worldH-rr2*2);
 
     if(player.kg > LOSE_KG){ lose("VƯỢT 130KG"); return; }
-
     if(rects({x:player.x,y:player.y,w:rr2*2,h:rr2*2}, finish)){
       if(player.kg <= TARGET_KG) win();
       else showCenter(`CHƯA ĐỦ ỐM (≤ ${TARGET_KG}KG)`);
@@ -1054,81 +1096,25 @@
     kgTextEl.textContent = `${player.kg.toFixed(2)}kg`;
   }
 
-  /* ===== Background: FIX "lung tung" -> no randomness per frame ===== */
-  const skyline = [];
-  function buildSkyline(){
-    skyline.length=0;
-    const w=1200; // logical width chunk
-    let x= -60;
-    let i=0;
-    while(x<w+120){
-      const bw = 44 + (Math.sin(i*1.9+0.7)*0.5+0.5)*78;
-      const bh = 80 + (Math.sin(i*2.4+1.1)*0.5+0.5)*200;
-      const wxCount = 6;
-      skyline.push({x,bw,bh,wxCount});
-      x += bw + 18;
-      i++;
-    }
+  /* ===== End / Win-lose ===== */
+  function lose(reason){
+    if(mode!=="play") return;
+    mode="end";
+    sfx("hit");
+    if(player.score>getBest()) setBest(player.score);
+    showEnd("lose", reason);
   }
-  buildSkyline();
-
-  function drawBG(t){
-    // steady gradient
-    const g=ctx.createLinearGradient(0,0,0,H());
-    g.addColorStop(0,"#0fe9c8");
-    g.addColorStop(0.55,"#3f3adf");
-    g.addColorStop(1,"#ff6b9b");
-    ctx.fillStyle=g; ctx.fillRect(0,0,W(),H());
-
-    // calm haze
-    ctx.save();
-    ctx.globalAlpha=0.10;
-    ctx.fillStyle="rgba(255,255,255,0.6)";
-    ctx.beginPath();
-    ctx.ellipse(W()*0.5, H()*0.84, W()*0.75, H()*0.14, 0, 0, Math.PI*2);
-    ctx.fill();
-    ctx.restore();
-
-    // skyline: VERY slow parallax (stable)
-    const baseY = H()*0.66;
-    const par = (Math.sin(t*0.05)*14); // slow tiny shift
-    ctx.save();
-    ctx.globalAlpha=0.22;
-    ctx.fillStyle="rgba(0,0,0,0.90)";
-    const scale = W()/1200;
-    for(const b of skyline){
-      const x = (b.x*scale + par);
-      rr(x, baseY - b.bh*scale, b.bw*scale, b.bh*scale, 10*scale);
-      ctx.fill();
-
-      // windows (stable blink very slow)
-      const blink = (Math.sin(t*0.6 + b.x*0.01)*0.5+0.5);
-      ctx.globalAlpha=0.06 + blink*0.06;
-      ctx.fillStyle="rgba(30,255,214,0.9)";
-      for(let k=0;k<6;k++){
-        const wx = x + 10*scale + (k%3)*16*scale;
-        const wy = baseY - b.bh*scale + 36*scale + Math.floor(k/3)*18*scale;
-        ctx.fillRect(wx, wy, 7*scale, 9*scale);
-      }
-      ctx.globalAlpha=0.22;
-      ctx.fillStyle="rgba(0,0,0,0.90)";
-    }
-    ctx.restore();
-
-    // few sparkles: stable positions
-    ctx.save();
-    ctx.globalAlpha=0.12;
-    for(let i=0;i<14;i++){
-      const x = (i*143)%W();
-      const y = 90 + ((i*79)%Math.max(240, H()*0.45));
-      const s = 1.5 + (Math.sin(t*1.1+i)*0.5+0.5)*1.2;
-      ctx.fillStyle = (i%2===0) ? "rgba(30,255,214,0.95)" : "rgba(255,107,155,0.95)";
-      ctx.beginPath(); ctx.arc(x,y,s,0,Math.PI*2); ctx.fill();
-    }
-    ctx.restore();
+  function win(){
+    if(mode!=="play") return;
+    mode="end";
+    sfx("door");
+    if(player.score>getBest()) setBest(player.score);
+    pushRanking({name:player.skin.name, score:player.score, ts:Date.now()});
+    spawnConfetti();
+    showEnd("win");
   }
 
-  /* ===== World draw ===== */
+  /* ===== Draw ===== */
   function drawWorld(t){
     const r=radius();
     const cx=player.x+r, cy=player.y+r;
@@ -1142,14 +1128,6 @@
     for(const b of blocks) ctx.fillRect(b.x,b.y,b.w,b.h);
 
     for(const tt of toilets) drawToiletIcon(tt.x, tt.y, tt.w, t);
-
-    for(const d of doors){
-      ctx.fillStyle = d.open ? "rgba(30,255,214,0.14)" : "rgba(30,255,214,0.28)";
-      rr(d.x,d.y,d.w,d.h,14); ctx.fill();
-      ctx.fillStyle="rgba(255,255,255,0.90)";
-      ctx.font="950 12px system-ui";
-      ctx.fillText(d.open ? "MỞ" : `≥${d.reqKg}KG`, d.x+10, d.y+24);
-    }
 
     for(const f of foodsStatic){
       if(!f.alive) continue;
@@ -1168,7 +1146,6 @@
     }
 
     drawCasinoExitDoor(finish.x, finish.y, finish.w, finish.h, t);
-
     drawPlayer(t);
 
     for(const p of particles){
@@ -1179,13 +1156,14 @@
         ctx.fillRect(p.x,p.y,3,3);
         ctx.fillStyle="rgba(30,255,214,0.85)";
         ctx.fillRect(p.x+3,p.y-2,2,2);
-      } else {
+      }else{
         ctx.globalAlpha=0.35*k;
         ctx.fillStyle="rgba(255,107,155,0.75)";
         rr(p.x,p.y,10,8,6); ctx.fill();
       }
       ctx.globalAlpha=1;
     }
+
     for(const pp of popups){
       const k=1-pp.t/pp.life;
       ctx.globalAlpha=0.92*k;
@@ -1218,10 +1196,10 @@
     }
   }
 
-  /* ===== Player: NO hair. Flower only. Arms lowered + "mặc cười" ===== */
+  /* ===== Player drawing (hair + flower, arms tiny) ===== */
   function drawPlayer(t){
     const r=radius();
-    const breathe = Math.sin(t*2.2)*1.2;
+    const breathe = Math.sin(t*2.2)*1.1;
     const runBounce = player.onGround ? Math.sin(player.runT*10)*2.0 : 0;
     const sway = player.onGround ? Math.sin(player.runT*6)*0.06 : Math.sin(t*1.8)*0.04;
 
@@ -1241,10 +1219,11 @@
     ctx.rotate(sway);
     ctx.scale(1.06, 0.94);
 
+    // base circle
     ctx.fillStyle=player.skin.base;
     ctx.beginPath(); ctx.arc(0, breathe*0.2, r, 0, Math.PI*2); ctx.fill();
 
-    // highlight
+    // small highlight
     ctx.fillStyle="rgba(255,255,255,0.14)";
     ctx.beginPath(); ctx.ellipse(-r*0.28, -r*0.28, r*0.36, r*0.24, 0, 0, Math.PI*2); ctx.fill();
 
@@ -1252,6 +1231,12 @@
     ctx.fillStyle="rgba(255,107,155,0.30)";
     ctx.beginPath(); ctx.arc(-r*0.44, r*0.10, r*0.14, 0, Math.PI*2); ctx.fill();
     ctx.beginPath(); ctx.arc( r*0.44, r*0.10, r*0.14, 0, Math.PI*2); ctx.fill();
+
+    // tiny hair (girl) 내려 xuống: a small fringe + side drop
+    ctx.fillStyle="rgba(20,22,35,0.55)";
+    rr(-r*0.46, -r*0.80, r*0.92, r*0.28, r*0.18); ctx.fill(); // top fringe
+    rr(-r*0.62, -r*0.66, r*0.24, r*0.54, r*0.18); ctx.fill(); // left drop
+    rr( r*0.38, -r*0.64, r*0.24, r*0.50, r*0.18); ctx.fill(); // right drop (small)
 
     // eyes
     player.blinkT -= 1/60;
@@ -1274,7 +1259,7 @@
       ctx.beginPath(); ctx.arc( r*0.20, -r*0.20, r*0.035, 0, Math.PI*2); ctx.fill();
     }
 
-    // "mặc cười" -> miệng lệch + răng nhỏ
+    // smirk mouth
     ctx.strokeStyle="#7a3f2b";
     ctx.lineWidth=Math.max(2, r*0.07);
     ctx.beginPath();
@@ -1285,17 +1270,17 @@
 
     ctx.restore(); // body
 
-    // arms lowered (short + sát thân, "đe xuống" hơn)
+    // arms: tiny nubs on sides
     ctx.save();
     ctx.rotate(sway);
     ctx.fillStyle="rgba(255,224,194,0.92)";
-    const aw = Math.max(4, r*0.20);
-    const ah = Math.max(8, r*0.44);
-    rr(-r-3, r*0.22, aw, ah, 7); ctx.fill();
-    rr(r-aw+3, r*0.22, aw, ah, 7); ctx.fill();
+    const aw = Math.max(4, r*0.14);
+    const ah = Math.max(6, r*0.20);
+    rr(-r-2, r*0.12, aw, ah, 7); ctx.fill();
+    rr(r-aw+2, r*0.12, aw, ah, 7); ctx.fill();
     ctx.restore();
 
-    // flower (only) smaller
+    // flower (small)
     ctx.save();
     ctx.translate(r*0.72, -r*0.60);
     ctx.rotate(-0.18);
@@ -1304,17 +1289,17 @@
     for(let i=0;i<5;i++){
       const ang = i*(Math.PI*2/5);
       ctx.beginPath();
-      ctx.ellipse(Math.cos(ang)*4.4, Math.sin(ang)*4.4, 3.8, 2.6, ang, 0, Math.PI*2);
+      ctx.ellipse(Math.cos(ang)*4.2, Math.sin(ang)*4.2, 3.6, 2.4, ang, 0, Math.PI*2);
       ctx.fill();
     }
     ctx.fillStyle="rgba(255,255,255,0.92)";
-    ctx.beginPath(); ctx.arc(0,0,2.2,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(0,0,2.1,0,Math.PI*2); ctx.fill();
     ctx.restore();
 
     ctx.restore();
   }
 
-  /* ===== Loop ===== */
+  /* ===== Main loop ===== */
   let last=0, acc=0;
   const FIXED=1/120, MAXF=1/20;
 
